@@ -1,14 +1,16 @@
 using HarmonyLib;
 using LetMePlayBBPlus;
+using UnityEngine;
 
-/*[HarmonyPatch(typeof(HudManager), "Awake")]
-class AddSilhouettesSystemPatch
+/*[HarmonyPatch(typeof(BaseGameManager), "BeginPlay")]
+class GameStartPatch
 {
-    static void Postfix(HudManager __instance)
+    static void Postfix()
     {
-        if (__instance.GetComponent<SilhouettesSystem>() == null) 
+        var system = GameObject.FindObjectOfType<SilhouettesSystem>();
+        if (system != null)
         {
-            __instance.gameObject.AddComponent<SilhouettesSystem>();
+            system.OnGameStarted();
         }
     }
 }*/

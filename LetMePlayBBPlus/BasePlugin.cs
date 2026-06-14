@@ -54,7 +54,6 @@ namespace LetMePlayBBPlus
                 assetMan.Add<Sprite>($"silhouette{i}", sprite);
             }
 
-            // Сохраняем количество
             assetMan.Add<int>("silhouetteCount", silhouettesFiles.Length);
 
             yield return "Loading Nich Silhouettes...";
