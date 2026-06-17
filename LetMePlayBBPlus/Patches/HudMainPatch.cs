@@ -2,15 +2,13 @@ using HarmonyLib;
 using LetMePlayBBPlus;
 using UnityEngine;
 
-/*[HarmonyPatch(typeof(BaseGameManager), "BeginPlay")]
+/*
+[HarmonyPatch(typeof(FogEvent), "Begin")]
 class GameStartPatch
 {
-    static void Postfix()
+    static void Postfix(FogEvent __instance)
     {
-        var system = GameObject.FindObjectOfType<SilhouettesSystem>();
-        if (system != null)
-        {
-            system.OnGameStarted();
-        }
+        var audManField = AccessTools.Field(typeof(FogEvent), "audMan");
+        AudioManager audMan = (AudioManager)audManField.GetValue(__instance);
     }
 }*/

@@ -9,11 +9,11 @@ namespace LetMePlayBBPlus
         private Fog currentFog;
         private Coroutine fadeCoroutine;
 
-        public float FogDensity { get; set; } = 0.03f;
-        public float FogSpeed { get; set; } = 1f;
-        public Color FogColor { get; set; } = Color.gray;
-        public float FogStartDist { get; set; } = 5f;
-        public float FogMaxDist { get; set; } = 15f;
+        public float FogDensity { get; set; } = 0.1f;
+        public float FogSpeed { get; set; } = 2f;
+        public Color FogColor { get; set; } = Color.white;
+        public float FogStartDist { get; set; } = 1f;
+        public float FogMaxDist { get; set; } = 2f;
 
         public FogManager(EnvironmentController ec)
         {

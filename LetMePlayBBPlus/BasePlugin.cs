@@ -29,20 +29,13 @@ namespace LetMePlayBBPlus
         }
         IEnumerator LoadMyAssets()
         {
-            yield return 3;
+            yield return 4;
             yield return "Loading Silhouettes...";
 
             string modPath = AssetLoader.GetModPath(this);
             string silhouettesPath = Path.Combine(modPath, "Silhouettes");
 
-            if (!Directory.Exists(silhouettesPath))
-            {
-                Debug.LogError("[LetMePlayBBPlus] Silhouettes folder not found!");
-                yield break;
-            }
-
             string[] silhouettesFiles = Directory.GetFiles(silhouettesPath, "*.png");
-            Debug.Log($"[LetMePlayBBPlus] Found {silhouettesFiles.Length} silhouettes");
 
             for (int i = 0; i < silhouettesFiles.Length; i++)
             {
@@ -73,12 +66,6 @@ namespace LetMePlayBBPlus
 
             string mainSilhouettesPath = Path.Combine(modPath, "MainSilhouettes");
 
-            if (!Directory.Exists(silhouettesPath))
-            {
-                Debug.LogError("[LetMePlayBBPlus] MainSilhouettes folder not found!");
-                yield break;
-            }
-
             string[] mainSilhouettesFiles = Directory.GetFiles(mainSilhouettesPath, "*.png");
 
             for (int i = 0; i < mainSilhouettesFiles.Length; i++)
@@ -93,6 +80,45 @@ namespace LetMePlayBBPlus
             Object.DontDestroyOnLoad(systemObj);
             systemObj.AddComponent<SilhouettesSystem>();
 
+            yield return "Loading audio...";
+
+            string audioPathType1 = Path.Combine(modPath, "Audio", "AnimationCycleType1");
+            if (Directory.Exists(audioPathType1))
+            {
+                string[] audioFilesType1 = Directory.GetFiles(audioPathType1, "*.*");
+                for (int i = 0; i < audioFilesType1.Length; i++)
+                {
+                    AudioClip clip = AssetLoader.AudioClipFromFile(audioFilesType1[i]);
+                    SoundObject soundObj = ObjectCreators.CreateSoundObject(
+                        clip,
+                        $"Mus_Sil_Type1_{i}",
+                        SoundType.Effect,
+                        Color.white
+                    );
+                    soundObj.subtitle = false; 
+                    assetMan.Add<SoundObject>($"animAudioType1_{i}", soundObj);
+                }
+                assetMan.Add<int>("audioCountType1", audioFilesType1.Length);
+            }
+
+            string audioPathType2 = Path.Combine(modPath, "Audio", "AnimationCycleType2");
+            if (Directory.Exists(audioPathType2))
+            {
+                string[] audioFilesType2 = Directory.GetFiles(audioPathType2, "*.*");
+                for (int i = 0; i < audioFilesType2.Length; i++)
+                {
+                    AudioClip clip = AssetLoader.AudioClipFromFile(audioFilesType2[i]);
+                    SoundObject soundObj = ObjectCreators.CreateSoundObject(
+                        clip,
+                        $"Mus_Sil_Type2_{i}",
+                        SoundType.Effect,
+                        Color.white
+                    );
+                    soundObj.subtitle = false;
+                    assetMan.Add<SoundObject>($"animAudioType2_{i}", soundObj);
+                }
+                assetMan.Add<int>("audioCountType2", audioFilesType2.Length);
+            }
             yield break;
         }
     }
