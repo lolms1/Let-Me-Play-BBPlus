@@ -16,11 +16,15 @@ namespace LetMePlayBBPlus
 
     public class BasePlugin : BaseUnityPlugin
     {
+        public static BasePlugin Instance { get; private set; }
 
         public static AssetManager assetMan = new AssetManager();
 
         public void Awake()
         {
+            Instance = this;
+            LMPCfgLoader.LoadAndApply();
+
             Harmony harmony = new Harmony("lolms.bbplusmod.letmeplaybbplus");
 
             harmony.PatchAllConditionals();

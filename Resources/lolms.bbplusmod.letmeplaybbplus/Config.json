@@ -1,0 +1,12 @@
+{
+  "cooldown": 5.0,
+  "phase1Duration": 3.3,
+  "spawnInterval": 0.55,
+  "mainStopTime": 2.0,
+  "pauseAtEdgeTime": 0.7,
+  "silhouetteSpeed": 800.0,
+  "maxRecentSilhouettes": 4,
+  "pausingSilhouettes": [
+    "silhouette0"
+  ]
+}

@@ -13,18 +13,15 @@ namespace LetMePlayBBPlus
 
         public static SilhouettesSystem Instance { get; private set; }
 
-        private float cooldown = 5f;
-        private float phase1Duration = 3.3f;
-        private float spawnInterval = 0.55f;
-        private float mainStopTime = 2f;
-        private const float pauseAtEdgeTime = 0.7f;
+        private float cooldown = LMPCfg.Cooldown;
+        private float phase1Duration = LMPCfg.Phase1Duration;
+        private float spawnInterval = LMPCfg.SpawnInterval;
+        private float mainStopTime = LMPCfg.MainStopTime;
+        private float pauseAtEdgeTime = LMPCfg.PauseAtEdgeTime;
 
-        private float silhouetteSpeed = 800f;
+        private float silhouetteSpeed = LMPCfg.SilhouetteSpeed;
 
-        private static readonly HashSet<string> pausingSilhouettes = new HashSet<string>
-        {
-            "silhouette0"
-        };
+        private static readonly HashSet<string> pausingSilhouettes = LMPCfg.PausingSilhouettes;
 
         private float timer;
         private bool isRunning;
@@ -40,7 +37,7 @@ namespace LetMePlayBBPlus
         private int currentLevel = -1;
 
         private readonly Queue<string> recentSilhouettes = new Queue<string>();
-        private const int maxRecentSilhouettes = 4;
+        private int maxRecentSilhouettes = LMPCfg.MaxRecentSilhouettes;
 
         private readonly List<string> savedSilhouetteOrder = new List<string>();
 
