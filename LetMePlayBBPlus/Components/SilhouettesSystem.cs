@@ -1,7 +1,9 @@
 using HarmonyLib;
+using MTM101BaldAPI.AssetTools;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace LetMePlayBBPlus
@@ -9,7 +11,9 @@ namespace LetMePlayBBPlus
     public class SilhouettesSystem : MonoBehaviour
     {
 
-        private float cooldown = 1f;
+        public static SilhouettesSystem Instance { get; private set; }
+
+        private float cooldown = 5f;
         private float phase1Duration = 3.3f;
         private float spawnInterval = 0.55f;
         private float mainStopTime = 2f;
@@ -29,7 +33,8 @@ namespace LetMePlayBBPlus
 
         private Canvas canvas;
         private FogManager fogMan;
-        private AudioManager audMan;
+        private AudioSourceManagerMain audSourceManMain;
+        private ReplayManager repMan;
 
         private bool isInGame;
         private int currentLevel = -1;
@@ -49,8 +54,10 @@ namespace LetMePlayBBPlus
         void Start()
         {
             DontDestroyOnLoad(gameObject);
+            Instance = this;
 
             canvas = GetComponent<Canvas>() ?? FindObjectOfType<Canvas>();
+            audSourceManMain = GetComponent<AudioSourceManagerMain>();
 
             timer = cooldown;
             isInitialized = true;
@@ -60,10 +67,25 @@ namespace LetMePlayBBPlus
         {
             if (!isInitialized) return;
 
-            if (!isInGame && IsInGame())
+            int level = GetCurrentLevel();
+            bool inGame = IsInGame();
+
+            if (level != currentLevel)
+            {
+                currentLevel = level;
+                isInGame = false;
+                isRunning = false;
+            }
+
+            if (inGame && !isInGame)
             {
                 isInGame = true;
                 timer = cooldown;
+            }
+            else if (!inGame && isInGame)
+            {
+                isInGame = false;
+                CancelCycle();
             }
 
             if (!isInGame || isRunning) return;
@@ -75,18 +97,13 @@ namespace LetMePlayBBPlus
                 StartCoroutine(RunAnimationCycleType2());
             }
         }
+
         private bool IsInGame()
         {
-            int level = GetCurrentLevel();
-            if (level != currentLevel)
-            {
-                currentLevel = level;
-                isInGame = false;
-            }
-
-            if (isInGame) return true;
-
-            return GameObject.FindObjectOfType<DigitalClock>() != null; // yeahhhhhhhhhhhhhhhh...
+            if (Singleton<CoreGameManager>.Instance == null) return false;
+            if (Singleton<CoreGameManager>.Instance.sceneObject == null) return false;
+            if (Singleton<CoreGameManager>.Instance.sceneObject.levelTitle == "PIT") return false;
+            return GameObject.FindObjectOfType<DigitalClock>() != null;
         }
 
         private int GetCurrentLevel()
@@ -102,36 +119,75 @@ namespace LetMePlayBBPlus
                 fogMan = new FogManager(Singleton<BaseGameManager>.Instance.Ec);
             return fogMan;
         }
-
-        private AudioManager GetAudioManager()
+        private ReplayManager GetRepManager()
         {
-            var audManField = AccessTools.Field(typeof(FogEvent), "audMan");
-            return (AudioManager)audManField.GetValue(new FogEvent());
+            if (repMan == null)
+                repMan = new ReplayManager(Singleton<BaseGameManager>.Instance.Ec, this);
+            return repMan;
+        }
+
+        private AudioSourceManagerMain GetAudSourceManMain()
+        {
+            if (audSourceManMain == null)
+                audSourceManMain = new AudioSourceManagerMain();
+            return audSourceManMain;
+        }
+
+        private void CancelCycle()
+        {
+            StopAllCoroutines();
+            isRunning = false;
+
+            if (canvas != null)
+            {
+                foreach (Transform child in canvas.transform)
+                {
+                    string name = child.name;
+                    if (name == "FastSilhouette" || name == "MainSilhouette" || name == "ReplaySilhouette")
+                        Destroy(child.gameObject);
+                }
+            }
+
+            if (fogMan != null)
+            {
+                fogMan.DisableFog(this);
+                fogMan = null;
+            }
+
+            if (repMan != null)
+            {
+                repMan.Reset();
+                repMan = null;
+            }
         }
 
         private IEnumerator RunAnimationCycleType2()
         {
             isRunning = true;
-
-            audMan = GetAudioManager();
-            Singleton<MusicManager>.Instance.PlaySoundEffect(BasePlugin.assetMan.Get<SoundObject>("animAudioType1_0")); // TODO : add random selecting
-
             fogMan = GetFogManager();
+            repMan = GetRepManager();
+            repMan.EnableTimeScale();
+            audSourceManMain = GetAudSourceManMain();
 
+            repMan.SaveAllPositions();
+
+            audSourceManMain.PlayMusic(BasePlugin.assetMan.Get<SoundObject>("animAudioType2_0")); // TODO : add random selecting
 
             yield return StartCoroutine(Phase1_FastSilhouettes(recordTo: savedSilhouetteOrder));
 
-            yield return StartCoroutine(FogFlash());
+            yield return StartCoroutine(FogFlash(speedMultiplier: 2f));
 
             yield return StartCoroutine(Phase1_ReplaySilhouettes(savedSilhouetteOrder, speedMultiplier: 2f));
 
-            yield return StartCoroutine(FogFlash());
+            yield return StartCoroutine(FogFlash(speedMultiplier: 0.7f));
 
-            yield return StartCoroutine(Phase1_ReplaySilhouettes(savedSilhouetteOrder, speedMultiplier: 0.5f));
+            yield return StartCoroutine(Phase1_ReplaySilhouettes(savedSilhouetteOrder, speedMultiplier: 0.7f));
 
             yield return StartCoroutine(Phase2_MainSilhouette());
 
             CharacterSpawnSystem.SpawnForSilhouette(lastMainSilhouetteIndex);
+
+            repMan.SetTimeScaleSmooth(1f, 0.03f);
 
             isRunning = false;
         }
@@ -154,10 +210,13 @@ namespace LetMePlayBBPlus
 
             isRunning = false;
         }
-        private IEnumerator FogFlash()
+        private IEnumerator FogFlash(float speedMultiplier)
         {
             fogMan.EnableFog(this);
             yield return new WaitForSeconds(0.5f);
+            repMan.SetTimeScaleInstant(speedMultiplier);
+            repMan.RestorePlayerRotations();
+            repMan.RestoreAllPositions();
             fogMan.DisableFog(this);
             yield return new WaitForSeconds(0.35f);
         }
@@ -264,10 +323,7 @@ namespace LetMePlayBBPlus
         {
             (RawImage rawImage, RectTransform rect) = BuildSilhouetteVisual(sprite, objName);
 
-            bool isMainSilhouette = (mode == MoveMode.StopInCenter);
-            float startX = isMainSilhouette
-                ? Screen.width + rect.sizeDelta.x / 2f
-                : Screen.width / 5f;
+            float startX = Screen.width / 4.5f;
 
             rect.anchoredPosition = new Vector2(startX, 0f);
 
@@ -285,7 +341,26 @@ namespace LetMePlayBBPlus
             RectTransform canvasRect = canvas.GetComponent<RectTransform>();
 
             rawImage.texture = sprite.texture;
-            rect.sizeDelta = new Vector2(canvasRect.rect.width * 0.3f, canvasRect.rect.height);
+
+            float canvasHeight = canvasRect.rect.height;
+            float canvasWidth = canvasRect.rect.width;
+            float spriteRatio = (float)sprite.texture.width / sprite.texture.height;
+
+            float targetHeight = canvasHeight;
+            float targetWidth = targetHeight * spriteRatio;
+
+            float maxWidth = canvasWidth * 0.4f;
+            if (targetWidth > maxWidth)
+            {
+                targetWidth = maxWidth;
+            }
+
+            if (targetWidth > canvasWidth)
+            {
+                targetWidth = canvasWidth;
+            }
+
+            rect.sizeDelta = new Vector2(targetWidth, targetHeight);
 
             return (rawImage, rect);
         }
@@ -379,6 +454,16 @@ namespace LetMePlayBBPlus
             recentSilhouettes.Enqueue(key);
             if (recentSilhouettes.Count > maxRecentSilhouettes)
                 recentSilhouettes.Dequeue();
+        }
+
+        public void PauseMusic()
+        {
+            audSourceManMain.PauseMusic();
+        }
+
+        public void ResumeMusic()
+        {
+            audSourceManMain.ResumeMusic();
         }
     }
 }

@@ -79,6 +79,7 @@ namespace LetMePlayBBPlus
             GameObject systemObj = new GameObject("SilhouettesSystem");
             Object.DontDestroyOnLoad(systemObj);
             systemObj.AddComponent<SilhouettesSystem>();
+            systemObj.AddComponent<AudioSourceManagerMain>();
 
             yield return "Loading audio...";
 
