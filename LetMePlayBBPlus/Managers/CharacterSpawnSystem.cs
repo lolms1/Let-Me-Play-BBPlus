@@ -5,6 +5,7 @@ namespace LetMePlayBBPlus
 {
     public static class CharacterSpawnSystem
     {
+        public static bool activeCumulo = false;
         private const float SpawnDistance = 10f;
         private const float NpcHeight = 5f;
         public static void SpawnForSilhouette(int silhouetteIndex)
@@ -14,7 +15,6 @@ namespace LetMePlayBBPlus
 
             EnvironmentController ec = GetCurrentEC();
             if (ec == null) return;
-
             NPC existingNpc = ec.Npcs.Find(x => x.Character == character);
 
             if (existingNpc != null)
@@ -27,7 +27,15 @@ namespace LetMePlayBBPlus
         {
             switch (index)
             {
+                case 1: return Character.Principal;
                 case 2: return Character.LookAt;
+                case 3: return Character.DrReflex;
+                case 4: return Character.Sweep;
+                case 5: return Character.Cumulo;
+                case 6: return Character.Beans;
+                case 7: return Character.Pomp;
+                case 8: return Character.Prize;
+                case 9: return Character.Baldi;
                 default: return Character.Null;
             }
         }
@@ -36,8 +44,27 @@ namespace LetMePlayBBPlus
         {
             switch (character)
             {
+                // we dont spawn principal ig same as baldi
                 case Character.LookAt:
                     SpawnNpcOfType<LookAtGuy>(ec);
+                    break;
+                case Character.DrReflex:
+                    SpawnNpcOfType<DrReflex>(ec);
+                    break;
+                case Character.Sweep:
+                    SpawnNpcOfType<GottaSweep>(ec);
+                    break;
+                case Character.Cumulo:
+                    SpawnNpcOfType<Cumulo>(ec);
+                    break;
+                case Character.Beans:
+                    SpawnNpcOfType<Beans>(ec);
+                    break;
+                case Character.Pomp:
+                    SpawnNpcOfType<NoLateTeacher>(ec);
+                    break;
+                case Character.Prize:
+                    SpawnNpcOfType<FirstPrize>(ec);
                     break;
             }
         }
@@ -51,7 +78,7 @@ namespace LetMePlayBBPlus
             if (safeCell == null) return;
 
             prefab.gameObject.SetActive(false);
-            T instance = Object.Instantiate(prefab, ec.transform);
+            T instance = UnityEngine.Object.Instantiate(prefab, ec.transform);
             prefab.gameObject.SetActive(true);
 
             instance.transform.position = safeCell.FloorWorldPosition;
@@ -97,6 +124,8 @@ namespace LetMePlayBBPlus
             Vector3 teleportPos = FindTeleportPosition(playerPos, cardinalDir, npc);
 
             npc.transform.position = teleportPos;
+
+            ChangeNpcState(npc);
 
             Entity entity = npc.GetComponent<Entity>();
             if (entity != null)
@@ -155,6 +184,34 @@ namespace LetMePlayBBPlus
                 if (dot > maxDot) { maxDot = dot; best = i; }
             }
             return cardinals[best];
+        }
+
+        private static void ChangeNpcState(NPC npc)
+        {
+            Debug.LogError(npc.name);
+            if (npc.name == "Baldi_Main1(Clone)" || npc.name == "Baldi_Main2(Clone)" || npc.name == "Baldi_Main3(Clone)" || npc.name == "Baldi_Main4(Clone)" || npc.name == "Baldi_Main5(Clone)")
+            {
+                Baldi baldi = npc.GetComponent<Baldi>();
+                Baldi_ShootState shootState = new Baldi_ShootState(
+                    npc,           // NPC reference
+                    baldi,           // Baldi reference
+                    baldi.behaviorStateMachine.CurrentState   // State to return to after shooting
+                );
+                npc.behaviorStateMachine.ChangeState(shootState);
+            }
+            if (npc.name == "Gotta Sweep" || npc.name == "Gotta Sweep(Clone)")
+            {
+                GottaSweep sweep = npc.GetComponent<GottaSweep>();
+                GottaSweep_SweepingTime sweepTime = new GottaSweep_SweepingTime(
+                    npc,
+                    sweep
+                );
+                npc.behaviorStateMachine.ChangeState(sweepTime);
+            }
+            if (npc.name == "CloudyCopter" || npc.name == "CloudyCopter(Clone)")
+            {
+                activeCumulo = true;
+            }
         }
     }
 }

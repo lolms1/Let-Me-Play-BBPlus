@@ -1,9 +1,7 @@
 using HarmonyLib;
-using MTM101BaldAPI.AssetTools;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace LetMePlayBBPlus
@@ -13,17 +11,31 @@ namespace LetMePlayBBPlus
 
         public static SilhouettesSystem Instance { get; private set; }
 
-        private float cooldown = LMPCfg.Cooldown;
-        private float phase1Duration = LMPCfg.Phase1Duration;
-        private float spawnInterval = LMPCfg.SpawnInterval;
-        private float mainStopTime = LMPCfg.MainStopTime;
-        private float pauseAtEdgeTime = LMPCfg.PauseAtEdgeTime;
+        private float basePhase1Duration;
+        private float baseSpawnInterval;
+        private float baseMainStopTime;
+        private float baseSilhouetteSpeed;
+        private float basePauseAtEdgeTime;
+        private float baseCooldown;
 
-        private float silhouetteSpeed = LMPCfg.SilhouetteSpeed;
+        private float currentPhase1Duration;
+        private float currentSpawnInterval;
+        private float currentMainStopTime;
+        private float currentSilhouetteSpeed;
+        private float currentPauseAtEdgeTime;
+        private float currentCooldown;
+        private float coefficient;
+        private float cooldownCoefficient;
+        private float multiplierLogBase;
+        private float cooldownMultiplierLogBase;
+        private float starterAnger;
 
-        private static readonly HashSet<string> pausingSilhouettes = LMPCfg.PausingSilhouettes;
+        private HashSet<string> pausingSilhouettes;
 
         private float timer;
+        private float anger;
+        private float cycleType2AngerRequirement;
+        private int cycleType2Chance;
         private bool isRunning;
         private bool isInitialized;
         private int lastMainSilhouetteIndex = -1;
@@ -37,9 +49,12 @@ namespace LetMePlayBBPlus
         private int currentLevel = -1;
 
         private readonly Queue<string> recentSilhouettes = new Queue<string>();
-        private int maxRecentSilhouettes = LMPCfg.MaxRecentSilhouettes;
+        private int maxRecentSilhouettes;
 
         private readonly List<string> savedSilhouetteOrder = new List<string>();
+
+        private bool randomAudioSelecting;
+        private int audioIndex;
 
         private enum MoveMode
         {
@@ -56,7 +71,8 @@ namespace LetMePlayBBPlus
             canvas = GetComponent<Canvas>() ?? FindObjectOfType<Canvas>();
             audSourceManMain = GetComponent<AudioSourceManagerMain>();
 
-            timer = cooldown;
+            LoadBaseValues();
+            currentCooldown = baseCooldown;
             isInitialized = true;
         }
 
@@ -77,7 +93,7 @@ namespace LetMePlayBBPlus
             if (inGame && !isInGame)
             {
                 isInGame = true;
-                timer = cooldown;
+                timer = currentCooldown;
             }
             else if (!inGame && isInGame)
             {
@@ -90,122 +106,149 @@ namespace LetMePlayBBPlus
             timer -= Time.deltaTime;
             if (timer <= 0f)
             {
-                timer = cooldown;
-                StartCoroutine(RunAnimationCycleType2());
-            }
-        }
-
-        private bool IsInGame()
-        {
-            if (Singleton<CoreGameManager>.Instance == null) return false;
-            if (Singleton<CoreGameManager>.Instance.sceneObject == null) return false;
-            if (Singleton<CoreGameManager>.Instance.sceneObject.levelTitle == "PIT") return false;
-            return GameObject.FindObjectOfType<DigitalClock>() != null;
-        }
-
-        private int GetCurrentLevel()
-        {
-            if (Singleton<CoreGameManager>.Instance == null) return -1;
-            if (Singleton<CoreGameManager>.Instance.sceneObject == null) return -1;
-            return Singleton<CoreGameManager>.Instance.sceneObject.levelNo;
-        }
-
-        private FogManager GetFogManager()
-        {
-            if (fogMan == null)
-                fogMan = new FogManager(Singleton<BaseGameManager>.Instance.Ec);
-            return fogMan;
-        }
-        private ReplayManager GetRepManager()
-        {
-            if (repMan == null)
-                repMan = new ReplayManager(Singleton<BaseGameManager>.Instance.Ec, this);
-            return repMan;
-        }
-
-        private AudioSourceManagerMain GetAudSourceManMain()
-        {
-            if (audSourceManMain == null)
-                audSourceManMain = new AudioSourceManagerMain();
-            return audSourceManMain;
-        }
-
-        private void CancelCycle()
-        {
-            StopAllCoroutines();
-            isRunning = false;
-
-            if (canvas != null)
-            {
-                foreach (Transform child in canvas.transform)
+                timer = currentCooldown;
+                anger = GetAnger();
+                if (anger >= cycleType2AngerRequirement && UnityEngine.Random.Range(0, cycleType2Chance) == 0)
                 {
-                    string name = child.name;
-                    if (name == "FastSilhouette" || name == "MainSilhouette" || name == "ReplaySilhouette")
-                        Destroy(child.gameObject);
+                    StartCoroutine(RunAnimationCycleType2());
+                }
+                else
+                {
+                    StartCoroutine(RunAnimationCycleType1());
                 }
             }
-
-            if (fogMan != null)
-            {
-                fogMan.DisableFog(this);
-                fogMan = null;
-            }
-
-            if (repMan != null)
-            {
-                repMan.Reset();
-                repMan = null;
-            }
         }
 
-        private IEnumerator RunAnimationCycleType2()
+        private IEnumerator RunAnimationCycleType1()
         {
             isRunning = true;
-            fogMan = GetFogManager();
-            repMan = GetRepManager();
-            repMan.EnableTimeScale();
-            audSourceManMain = GetAudSourceManMain();
+            CalculateCurrentCooldown();
 
-            repMan.SaveAllPositions();
-
-            audSourceManMain.PlayMusic(BasePlugin.assetMan.Get<SoundObject>("animAudioType2_0")); // TODO : add random selecting
-
-            yield return StartCoroutine(Phase1_FastSilhouettes(recordTo: savedSilhouetteOrder));
-
-            yield return StartCoroutine(FogFlash(speedMultiplier: 2f));
-
-            yield return StartCoroutine(Phase1_ReplaySilhouettes(savedSilhouetteOrder, speedMultiplier: 2f));
-
-            yield return StartCoroutine(FogFlash(speedMultiplier: 0.7f));
-
-            yield return StartCoroutine(Phase1_ReplaySilhouettes(savedSilhouetteOrder, speedMultiplier: 0.7f));
-
-            yield return StartCoroutine(Phase2_MainSilhouette());
-
-            CharacterSpawnSystem.SpawnForSilhouette(lastMainSilhouetteIndex);
-
-            repMan.SetTimeScaleSmooth(1f, 0.03f);
-
-            isRunning = false;
-        }
-
-        private IEnumerator RunAnimationCycle()
-        {
-            isRunning = true;
-
-            fogMan = GetFogManager();
-
-            Debug.Log($"isingame {IsInGame()}, scene level {Singleton<CoreGameManager>.Instance.sceneObject.levelNo}");
-            fogMan.EnableFog(this);
+            string audioKey = PickAudioKey("animAudioType1", count: BasePlugin.assetMan.Get<int>("audioCountType1"));
+            PlayAudio(audioKey);
 
             yield return StartCoroutine(Phase1_FastSilhouettes());
             yield return StartCoroutine(Phase2_MainSilhouette());
 
             CharacterSpawnSystem.SpawnForSilhouette(lastMainSilhouetteIndex);
-
-            fogMan.DisableFog(this);
+            audSourceManMain.StopMusic();
 
             isRunning = false;
+        }
+
+        private IEnumerator RunAnimationCycleType2()
+        {
+            isRunning = true;
+
+            string audioKey = PickAudioKey("animAudioType2", count: BasePlugin.assetMan.Get<int>("audioCountType2"));
+            PlayAudio(audioKey);
+
+            AnimSequence sequence = AnimEditor.GetSequence(audioKey);
+
+            fogMan = GetFogManager();
+            repMan = GetRepManager();
+            repMan.EnableTimeScale();
+            repMan.SaveAllPositions();
+
+            ApplySequenceParams(sequence.parameters);
+            yield return StartCoroutine(ExecuteSequence(sequence));
+            repMan.SetTimeScaleSmooth(1f, 0.03f);
+            audSourceManMain.StopMusic();
+
+            isRunning = false;
+        }
+        private IEnumerator ExecuteSequence(AnimSequence sequence)
+        {
+            foreach (AnimStep step in sequence.steps)
+            {
+                switch (step.type)
+                {
+                    case AnimStepType.Phase1:
+                        yield return StartCoroutine(Phase1_FastSilhouettes(recordTo: savedSilhouetteOrder));
+                        break;
+
+                    case AnimStepType.FogFlash:
+                        yield return StartCoroutine(FogFlash(step.speedMultiplier));
+                        break;
+
+                    case AnimStepType.Replay:
+                        yield return StartCoroutine(Phase1_ReplaySilhouettes(savedSilhouetteOrder, step.speedMultiplier));
+                        break;
+
+                    case AnimStepType.Phase2:
+                        yield return StartCoroutine(Phase2_MainSilhouette());
+                        break;
+
+                    case AnimStepType.SpawnCharacter:
+                        CharacterSpawnSystem.SpawnForSilhouette(lastMainSilhouetteIndex);
+                        break;
+                }
+            }
+        }
+
+        public void PlayAudio(string key)
+        {
+            audSourceManMain = GetAudSourceManMain();
+            audSourceManMain.PlayMusic(BasePlugin.assetMan.Get<SoundObject>(key));
+        }
+
+        private string PickAudioKey(string prefix, int count)
+        {
+            if (count <= 0) return $"{prefix}_0";
+            int index; // TODO: Random.Range(0, count)
+            if (!randomAudioSelecting)
+            {
+                index = audioIndex;
+            }
+            else
+            {
+                index = UnityEngine.Random.Range(0, count);
+            }
+            return $"{prefix}_{index}";
+        }
+        private void LoadBaseValues()
+        {
+            baseCooldown = LMPCfg.Cooldown;
+            basePhase1Duration = LMPCfg.Phase1Duration;
+            baseSpawnInterval = LMPCfg.SpawnInterval;
+            baseMainStopTime = LMPCfg.MainStopTime;
+            baseSilhouetteSpeed = LMPCfg.SilhouetteSpeed;
+            basePauseAtEdgeTime = LMPCfg.PauseAtEdgeTime;
+            coefficient = LMPCfg.Coefficient;
+            cooldownCoefficient = LMPCfg.CooldownCoefficient;
+            multiplierLogBase = LMPCfg.MultiplierLogBase;
+            cooldownMultiplierLogBase = LMPCfg.CooldownMultiplierLogBase;
+            starterAnger = LMPCfg.StarterAnger;
+            maxRecentSilhouettes = LMPCfg.MaxRecentSilhouettes;
+            cycleType2AngerRequirement = LMPCfg.CycleType2AngerRequirement;
+            cycleType2Chance = LMPCfg.CycleType2Chance;
+            randomAudioSelecting = LMPCfg.RandomAudioSelecting;
+            audioIndex = LMPCfg.AudioIndex;
+
+            pausingSilhouettes = LMPCfg.PausingSilhouettes;
+
+        }
+
+        private void ApplySequenceParams(AnimSequenceParams p)
+        {
+            currentPhase1Duration = p.phase1Duration ?? basePhase1Duration;
+            currentSpawnInterval = p.spawnInterval ?? baseSpawnInterval;
+            currentSilhouetteSpeed = p.silhouetteSpeed ?? baseSilhouetteSpeed;
+            currentPauseAtEdgeTime = p.pauseAtEdgeTime ?? basePauseAtEdgeTime;
+        }
+        private void CalculateCurrentCooldown()
+        {
+            // we got anger already in Update() if you wonder
+
+            float multiplier = Mathf.Log(starterAnger + anger, multiplierLogBase) * coefficient;
+            float cooldownMultiplier = Mathf.Log(starterAnger + anger, cooldownMultiplierLogBase) * cooldownCoefficient;
+
+            currentCooldown = baseCooldown / Mathf.Max(cooldownMultiplier, 1f);
+            currentPhase1Duration = basePhase1Duration / Mathf.Max(multiplier, 1f);
+            currentSpawnInterval = baseSpawnInterval / multiplier;
+            currentMainStopTime = baseMainStopTime / Mathf.Max(multiplier, 1f);
+            currentSilhouetteSpeed = baseSilhouetteSpeed * multiplier; 
+            currentPauseAtEdgeTime = basePauseAtEdgeTime / multiplier;
         }
         private IEnumerator FogFlash(float speedMultiplier)
         {
@@ -226,7 +269,7 @@ namespace LetMePlayBBPlus
             float nextSpawn = 0f;
             bool lastWasPausing = false;
 
-            while (elapsed < phase1Duration)
+            while (elapsed < currentPhase1Duration)
             {
                 if (nextSpawn <= 0f)
                 {
@@ -239,7 +282,7 @@ namespace LetMePlayBBPlus
                         lastWasPausing = result > 0f;
                     }));
 
-                    nextSpawn = spawnInterval + extraDelay;
+                    nextSpawn = currentSpawnInterval + extraDelay;
                 }
 
                 nextSpawn -= Time.deltaTime;
@@ -247,14 +290,14 @@ namespace LetMePlayBBPlus
                 yield return null;
             }
             if (lastWasPausing)
-                yield return new WaitForSeconds(pauseAtEdgeTime);
+                yield return new WaitForSeconds(currentPauseAtEdgeTime);
 
-            yield return new WaitForSeconds(0.7f);
+            yield return new WaitForSeconds(currentSpawnInterval);
         }
 
         private IEnumerator Phase1_ReplaySilhouettes(List<string> spriteKeys, float speedMultiplier)
         {
-            float effectiveSpawnInterval = spawnInterval / speedMultiplier;
+            float effectiveSpawnInterval = currentSpawnInterval / speedMultiplier;
 
             int index = 0;
             float nextSpawn = 0f;
@@ -267,7 +310,7 @@ namespace LetMePlayBBPlus
                     string key = spriteKeys[index];
                     bool isPausing = pausingSilhouettes.Contains(key);
                     lastWasPausing = isPausing;
-                    float extraDelay = isPausing ? pauseAtEdgeTime / speedMultiplier : 0f;
+                    float extraDelay = isPausing ? currentPauseAtEdgeTime / speedMultiplier : 0f;
 
                     MoveMode mode = isPausing ? MoveMode.PauseAtEdge : MoveMode.PassThrough;
                     SpawnSilhouetteByKey(key, mode, speedMultiplier);
@@ -281,9 +324,9 @@ namespace LetMePlayBBPlus
             }
 
             if (lastWasPausing)
-                yield return new WaitForSeconds(pauseAtEdgeTime);
+                yield return new WaitForSeconds(currentPauseAtEdgeTime);
 
-            yield return new WaitForSeconds(0.6f);
+            yield return new WaitForSeconds(currentSpawnInterval / speedMultiplier);
         }
 
         private IEnumerator SpawnFastSilhouette(List<string> recordTo, System.Action<float> onComplete)
@@ -297,7 +340,7 @@ namespace LetMePlayBBPlus
             MoveMode mode = isPausing ? MoveMode.PauseAtEdge : MoveMode.PassThrough;
 
             LaunchSilhouette(sprite, "FastSilhouette", mode, speedMultiplier: 1f);
-            onComplete(isPausing ? pauseAtEdgeTime : 0f);
+            onComplete(isPausing ? currentPauseAtEdgeTime : 0f);
             yield return null;
         }
 
@@ -364,20 +407,20 @@ namespace LetMePlayBBPlus
 
         private IEnumerator MoveSilhouette(RawImage rawImage, RectTransform rect, MoveMode mode, float speedMultiplier)
         {
-            float speed = silhouetteSpeed * speedMultiplier;
+            float speed = currentSilhouetteSpeed * speedMultiplier;
             float endX = -Screen.height * 0.5f;
 
             switch (mode)
             {
                 case MoveMode.StopInCenter:
                     yield return MoveUntilX(rect, speed, targetX: 0f, clamp: true);
-                    yield return new WaitForSeconds(mainStopTime);
+                    yield return new WaitForSeconds(currentMainStopTime);
                     break;
 
                 case MoveMode.PauseAtEdge:
                     float rightEdgeX = canvas.GetComponent<RectTransform>().rect.width / 4f;
                     yield return MoveUntilX(rect, speed, targetX: rightEdgeX, clamp: true);
-                    yield return new WaitForSeconds(pauseAtEdgeTime / speedMultiplier);
+                    yield return new WaitForSeconds(currentPauseAtEdgeTime / speedMultiplier);
                     yield return MoveUntilX(rect, speed, targetX: endX, clamp: false);
                     break;
 
@@ -412,14 +455,14 @@ namespace LetMePlayBBPlus
                 int count = BasePlugin.assetMan.Get<int>("mainSilhouetteCount");
                 if (count <= 0) return null;
 
-                int index = 2; // TODO: make random selecting
+                int index = UnityEngine.Random.Range(1, count);
                 lastMainSilhouetteIndex = index;
                 key = $"mainSilhouette{index}";
                 return BasePlugin.assetMan.Get<Sprite>(key);
             }
 
             int nicheCount = BasePlugin.assetMan.Get<int>("nicheSilhouetteCount");
-            if (nicheCount > 0 && Random.Range(0, 200) == 43)
+            if (nicheCount > 0 && UnityEngine.Random.Range(0, 200) == 43)
                 return PickUniqueSprite("nicheSilhouette", nicheCount, out key);
 
             int regularCount = BasePlugin.assetMan.Get<int>("silhouetteCount");
@@ -439,11 +482,39 @@ namespace LetMePlayBBPlus
             }
 
             chosenKey = available.Count > 0
-                ? available[Random.Range(0, available.Count)]
-                : $"{prefix}{Random.Range(0, count)}";
+                ? available[UnityEngine.Random.Range(0, available.Count)]
+                : $"{prefix}{UnityEngine.Random.Range(0, count)}";
 
             AddToRecentQueue(chosenKey);
             return BasePlugin.assetMan.Get<Sprite>(chosenKey);
+        }
+
+        private void CancelCycle()
+        {
+            StopAllCoroutines();
+            isRunning = false;
+
+            if (canvas != null)
+            {
+                foreach (Transform child in canvas.transform)
+                {
+                    string name = child.name;
+                    if (name == "FastSilhouette" || name == "MainSilhouette" || name == "ReplaySilhouette")
+                        Destroy(child.gameObject);
+                }
+            }
+
+            if (fogMan != null)
+            {
+                fogMan.DisableFog(this);
+                fogMan = null;
+            }
+
+            if (repMan != null)
+            {
+                repMan.Reset();
+                repMan = null;
+            }
         }
 
         private void AddToRecentQueue(string key)
@@ -451,6 +522,50 @@ namespace LetMePlayBBPlus
             recentSilhouettes.Enqueue(key);
             if (recentSilhouettes.Count > maxRecentSilhouettes)
                 recentSilhouettes.Dequeue();
+        }
+
+        private bool IsInGame()
+        {
+            if (Singleton<CoreGameManager>.Instance == null) return false;
+            if (Singleton<CoreGameManager>.Instance.sceneObject == null) return false;
+            if (Singleton<CoreGameManager>.Instance.sceneObject.levelTitle == "PIT") return false;
+            return GameObject.FindObjectOfType<DigitalClock>() != null;
+        }
+
+        private int GetCurrentLevel()
+        {
+            if (Singleton<CoreGameManager>.Instance == null) return -1;
+            if (Singleton<CoreGameManager>.Instance.sceneObject == null) return -1;
+            return Singleton<CoreGameManager>.Instance.sceneObject.levelNo;
+        }
+
+        private FogManager GetFogManager()
+        {
+            if (fogMan == null)
+                fogMan = new FogManager(Singleton<BaseGameManager>.Instance.Ec);
+            return fogMan;
+        }
+        private ReplayManager GetRepManager()
+        {
+            if (repMan == null)
+                repMan = new ReplayManager(Singleton<BaseGameManager>.Instance.Ec, this);
+            return repMan;
+        }
+
+        private float GetAnger()
+        {
+            if (GameObject.FindObjectOfType<Baldi>() == null) return 0;
+            Baldi baldi = GameObject.FindObjectOfType<Baldi>();
+
+            var angerField = AccessTools.Field(typeof(Baldi), "anger");
+            return (float)angerField.GetValue(baldi);
+        }
+
+        private AudioSourceManagerMain GetAudSourceManMain()
+        {
+            if (audSourceManMain == null)
+                audSourceManMain = new AudioSourceManagerMain();
+            return audSourceManMain;
         }
 
         public void PauseMusic()

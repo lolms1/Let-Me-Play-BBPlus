@@ -24,6 +24,7 @@ namespace LetMePlayBBPlus
         {
             Instance = this;
             LMPCfgLoader.LoadAndApply();
+            AnimEditorLoader.LoadAndApply();
 
             Harmony harmony = new Harmony("lolms.bbplusmod.letmeplaybbplus");
 
@@ -33,7 +34,7 @@ namespace LetMePlayBBPlus
         }
         IEnumerator LoadMyAssets()
         {
-            yield return 4;
+            yield return 6;
             yield return "Loading Silhouettes...";
 
             string modPath = AssetLoader.GetModPath(this);
@@ -81,7 +82,7 @@ namespace LetMePlayBBPlus
             assetMan.Add<int>("mainSilhouetteCount", mainSilhouettesFiles.Length);
 
             GameObject systemObj = new GameObject("SilhouettesSystem");
-            Object.DontDestroyOnLoad(systemObj);
+            UnityEngine.Object.DontDestroyOnLoad(systemObj);
             systemObj.AddComponent<SilhouettesSystem>();
             systemObj.AddComponent<AudioSourceManagerMain>();
 
@@ -124,6 +125,58 @@ namespace LetMePlayBBPlus
                 }
                 assetMan.Add<int>("audioCountType2", audioFilesType2.Length);
             }
+            yield return "Loading other stuff...";
+
+            string othersStuffPath = Path.Combine(modPath, "OtherStuff");
+
+            Texture2D AntonChigurhShootingSheets = AssetLoader.TextureFromFile(Path.Combine(othersStuffPath, "anton_chigurhshooting.png"));
+
+            Sprite[] AntonChigurhShootingSprites = AssetLoader.SpritesFromSpritesheet(
+                2,
+                1,
+                35f,
+                Vector2.one / 2f,
+                AntonChigurhShootingSheets
+            );
+
+            assetMan.Add<Sprite>("BaldiAim", AntonChigurhShootingSprites[0]);
+            assetMan.Add<Sprite>("BaldiShoot", AntonChigurhShootingSprites[1]);
+
+            AudioClip shootClip = AssetLoader.AudioClipFromFile(Path.Combine(othersStuffPath, "shoot.wav"));
+            AudioClip BaldiAimingClip = AssetLoader.AudioClipFromFile(Path.Combine(othersStuffPath, "BaldiAiming.wav"));
+
+            SoundObject shootSound = ObjectCreators.CreateSoundObject(
+                shootClip,
+                "Sfx_Baldi_Shoot_Shoot",
+                SoundType.Effect,
+                Color.red
+            );
+            shootSound.subtitle = true;
+
+            SoundObject BaldiAimingSound = ObjectCreators.CreateSoundObject(
+                BaldiAimingClip,
+                "Sfx_Baldi_Shoot_Aim",
+                SoundType.Effect,
+                Color.red
+            );
+
+            assetMan.Add<SoundObject>("BaldiShootSound", shootSound);
+            assetMan.Add<SoundObject>("BaldiAimingSound", BaldiAimingSound);
+
+            yield return "Loading Prefabs";
+
+            ITM_NanaPeel bananaPrefab = null;
+            foreach (var item in Resources.FindObjectsOfTypeAll<ITM_NanaPeel>())
+            {
+                if (item.gameObject.scene.name == null)
+                {
+                    bananaPrefab = item;
+                    break;
+                }
+            }
+
+            assetMan.Add<ITM_NanaPeel>("ITM_NanaPeel", bananaPrefab);
+
             yield break;
         }
     }
