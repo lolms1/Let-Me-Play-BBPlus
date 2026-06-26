@@ -188,7 +188,6 @@ namespace LetMePlayBBPlus
 
         private static void ChangeNpcState(NPC npc)
         {
-            Debug.LogError(npc.name);
             if (npc.name == "Baldi_Main1(Clone)" || npc.name == "Baldi_Main2(Clone)" || npc.name == "Baldi_Main3(Clone)" || npc.name == "Baldi_Main4(Clone)" || npc.name == "Baldi_Main5(Clone)")
             {
                 Baldi baldi = npc.GetComponent<Baldi>();

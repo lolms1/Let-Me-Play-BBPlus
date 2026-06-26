@@ -44,6 +44,7 @@ namespace LetMePlayBBPlus
         private FogManager fogMan;
         private AudioSourceManagerMain audSourceManMain;
         private ReplayManager repMan;
+        private LightManager lightMan;
 
         private bool isInGame;
         private int currentLevel = -1;
@@ -147,6 +148,7 @@ namespace LetMePlayBBPlus
 
             fogMan = GetFogManager();
             repMan = GetRepManager();
+            lightMan = GetLightManager();
             repMan.EnableTimeScale();
             repMan.SaveAllPositions();
 
@@ -168,7 +170,7 @@ namespace LetMePlayBBPlus
                         break;
 
                     case AnimStepType.FogFlash:
-                        yield return StartCoroutine(FogFlash(step.speedMultiplier));
+                        yield return StartCoroutine(FogFlash(step.speedMultiplier, step.enabled));
                         break;
 
                     case AnimStepType.Replay:
@@ -181,6 +183,15 @@ namespace LetMePlayBBPlus
 
                     case AnimStepType.SpawnCharacter:
                         CharacterSpawnSystem.SpawnForSilhouette(lastMainSilhouetteIndex);
+                        break;
+                    case AnimStepType.SaveAndDisableLights:
+                        lightMan.DisableAllLights();
+                        break;
+                    case AnimStepType.RestoreLights:
+                        lightMan.RestoreLights();
+                        break;
+                    case AnimStepType.Cooldown:
+                        yield return new WaitForSeconds(step.speedMultiplier);
                         break;
                 }
             }
@@ -247,14 +258,14 @@ namespace LetMePlayBBPlus
             currentPhase1Duration = basePhase1Duration / Mathf.Max(multiplier, 1f);
             currentSpawnInterval = baseSpawnInterval / multiplier;
             currentMainStopTime = baseMainStopTime / Mathf.Max(multiplier, 1f);
-            currentSilhouetteSpeed = baseSilhouetteSpeed * multiplier; 
+            currentSilhouetteSpeed = baseSilhouetteSpeed * multiplier;
             currentPauseAtEdgeTime = basePauseAtEdgeTime / multiplier;
         }
-        private IEnumerator FogFlash(float speedMultiplier)
+        private IEnumerator FogFlash(float speedMultiplier, bool playerApply)
         {
             fogMan.EnableFog(this);
             yield return new WaitForSeconds(0.5f);
-            repMan.SetTimeScaleInstant(speedMultiplier);
+            repMan.SetTimeScaleInstant(speedMultiplier, playerApply);
             repMan.RestorePlayerRotations();
             repMan.RestoreAllPositions();
             fogMan.DisableFog(this);
@@ -551,7 +562,12 @@ namespace LetMePlayBBPlus
                 repMan = new ReplayManager(Singleton<BaseGameManager>.Instance.Ec, this);
             return repMan;
         }
-
+        private LightManager GetLightManager()
+        {
+            if (lightMan == null)
+                lightMan = new LightManager(Singleton<BaseGameManager>.Instance.Ec);
+            return lightMan;
+        }
         private float GetAnger()
         {
             if (GameObject.FindObjectOfType<Baldi>() == null) return 0;

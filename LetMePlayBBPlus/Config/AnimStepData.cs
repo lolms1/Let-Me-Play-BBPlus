@@ -9,6 +9,9 @@ namespace LetMePlayBBPlus
         Replay,
         Phase2,
         SpawnCharacter,
+        SaveAndDisableLights,
+        RestoreLights,
+        Cooldown
     }
 
     [System.Serializable]
@@ -16,6 +19,7 @@ namespace LetMePlayBBPlus
     {
         public AnimStepType type;
         public float speedMultiplier = 1f;
+        public bool enabled = true;
     }
     [System.Serializable]
     public class AnimSequenceParams

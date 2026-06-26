@@ -29,12 +29,15 @@ namespace LetMePlayBBPlus
             this.timeScaleModifier = new TimeScaleModifier(1f, 1f, 1f);
         }
 
-        public void SetTimeScaleInstant(float timeScale)
+        public void SetTimeScaleInstant(float timeScale, bool playerApply)
         {
             currentTimeScale = timeScale;
             targetTimeScale = timeScale;
             ApplyTimeScale(timeScale);
-            UpdatePlayerSlow(); 
+            if (playerApply)
+            {
+                UpdatePlayerSlow(); 
+            }
         }
 
         public void SetTimeScaleSmooth(float target, float changeSpeed = -1f)
