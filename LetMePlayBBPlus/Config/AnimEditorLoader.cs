@@ -1,6 +1,8 @@
 using LetMePlayBBPlus;
 using MTM101BaldAPI.AssetTools;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public static class AnimEditorLoader
@@ -11,6 +13,11 @@ public static class AnimEditorLoader
     {
         filePath = Path.Combine(AssetLoader.GetModPath(BasePlugin.Instance), "AnimEditor.json");
 
+        JsonSerializerSettings settings = new JsonSerializerSettings
+        {
+            Formatting = Formatting.Indented
+        };
+
         AnimEditorData data;
 
         if (!File.Exists(filePath))
@@ -20,7 +27,7 @@ public static class AnimEditorLoader
         else
         {
             string json = File.ReadAllText(filePath);
-            data = JsonConvert.DeserializeObject<AnimEditorData>(json) ?? new AnimEditorData();
+            data = JsonConvert.DeserializeObject<AnimEditorData>(json, settings) ?? new AnimEditorData();
         }
 
         bool changed = FillMissingSequences(data);
@@ -28,7 +35,7 @@ public static class AnimEditorLoader
 
         if (changed || !File.Exists(filePath))
         {
-            string json = JsonConvert.SerializeObject(data, Formatting.Indented);
+            string json = JsonConvert.SerializeObject(data, settings);
             File.WriteAllText(filePath, json);
         }
 
@@ -36,7 +43,6 @@ public static class AnimEditorLoader
 
         AnimEditor.SetSequences(data.sequences);
     }
-
     private static bool FillMissingSequences(AnimEditorData data)
     {
         bool changed = false;
@@ -86,10 +92,10 @@ public static class AnimEditorLoader
             steps = new List<AnimStep>
             {
                 new AnimStep { type = AnimStepType.Phase1                                  },
-                new AnimStep { type = AnimStepType.FogFlash,       speedMultiplier = 2f   },
-                new AnimStep { type = AnimStepType.Replay,         speedMultiplier = 2f   },
-                new AnimStep { type = AnimStepType.FogFlash,       speedMultiplier = 0.7f },
-                new AnimStep { type = AnimStepType.Replay,         speedMultiplier = 0.7f },
+                new AnimStep { type = AnimStepType.FogFlash, speedMultiplier = 2f         },
+                new AnimStep { type = AnimStepType.Replay,   speedMultiplier = 2f         },
+                new AnimStep { type = AnimStepType.FogFlash, speedMultiplier = 0.7f       },
+                new AnimStep { type = AnimStepType.Replay,   speedMultiplier = 0.7f       },
                 new AnimStep { type = AnimStepType.Phase2                                  },
                 new AnimStep { type = AnimStepType.SpawnCharacter                          },
             }
@@ -128,7 +134,7 @@ public static class AnimEditorLoader
                                 $"Replay at step {i} comes before Phase1! " +
                                 $"Replacing with Phase1 automatically."
                             );
-                            steps[i] = new AnimStep { type = AnimStepType.Phase1, speedMultiplier = 1f };
+                            steps[i] = new AnimStep { type = AnimStepType.Phase1 };
                             phase1Seen = true;
                         }
                         break;

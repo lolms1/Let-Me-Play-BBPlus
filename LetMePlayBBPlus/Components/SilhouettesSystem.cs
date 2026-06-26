@@ -45,6 +45,7 @@ namespace LetMePlayBBPlus
         private AudioSourceManagerMain audSourceManMain;
         private ReplayManager repMan;
         private LightManager lightMan;
+        private WallShakeManager wallMan;
 
         private bool isInGame;
         private int currentLevel = -1;
@@ -149,12 +150,15 @@ namespace LetMePlayBBPlus
             fogMan = GetFogManager();
             repMan = GetRepManager();
             lightMan = GetLightManager();
+            wallMan = GetWallShakeManager();
             repMan.EnableTimeScale();
             repMan.SaveAllPositions();
 
             ApplySequenceParams(sequence.parameters);
             yield return StartCoroutine(ExecuteSequence(sequence));
+
             repMan.SetTimeScaleSmooth(1f, 0.03f);
+            wallMan.StopShake();
             audSourceManMain.StopMusic();
 
             isRunning = false;
@@ -165,34 +169,46 @@ namespace LetMePlayBBPlus
             {
                 switch (step.type)
                 {
-                    case AnimStepType.Phase1:
+                    case AnimStepType.Phase1: // 0
                         yield return StartCoroutine(Phase1_FastSilhouettes(recordTo: savedSilhouetteOrder));
                         break;
 
-                    case AnimStepType.FogFlash:
+                    case AnimStepType.FogFlash: // 1
                         yield return StartCoroutine(FogFlash(step.speedMultiplier, step.enabled));
                         break;
 
-                    case AnimStepType.Replay:
+                    case AnimStepType.Replay: // 2
                         yield return StartCoroutine(Phase1_ReplaySilhouettes(savedSilhouetteOrder, step.speedMultiplier));
                         break;
 
-                    case AnimStepType.Phase2:
+                    case AnimStepType.Phase2: // 3
                         yield return StartCoroutine(Phase2_MainSilhouette());
                         break;
 
-                    case AnimStepType.SpawnCharacter:
+                    case AnimStepType.SpawnCharacter: // 4
                         CharacterSpawnSystem.SpawnForSilhouette(lastMainSilhouetteIndex);
                         break;
-                    case AnimStepType.SaveAndDisableLights:
+
+                    case AnimStepType.SaveAndDisableLights: // 5
                         lightMan.DisableAllLights();
                         break;
-                    case AnimStepType.RestoreLights:
+
+                    case AnimStepType.RestoreLights: // 6
                         lightMan.RestoreLights();
                         break;
-                    case AnimStepType.Cooldown:
+
+                    case AnimStepType.StartShakingWall: // 7
+                        wallMan.StartShake(step.intensity, step.interval, step.decaySpeed, step.duration);
+                        break;
+
+                    case AnimStepType.StopShakingWall: // 8
+                        wallMan.StopShake();
+                        break;
+
+                    case AnimStepType.Cooldown: // 9
                         yield return new WaitForSeconds(step.speedMultiplier);
                         break;
+
                 }
             }
         }
@@ -206,7 +222,7 @@ namespace LetMePlayBBPlus
         private string PickAudioKey(string prefix, int count)
         {
             if (count <= 0) return $"{prefix}_0";
-            int index; // TODO: Random.Range(0, count)
+            int index;
             if (!randomAudioSelecting)
             {
                 index = audioIndex;
@@ -567,6 +583,12 @@ namespace LetMePlayBBPlus
             if (lightMan == null)
                 lightMan = new LightManager(Singleton<BaseGameManager>.Instance.Ec);
             return lightMan;
+        }
+        private WallShakeManager GetWallShakeManager()
+        {
+            if (wallMan == null)
+                wallMan = new WallShakeManager(Singleton<BaseGameManager>.Instance.Ec);
+            return wallMan;
         }
         private float GetAnger()
         {
