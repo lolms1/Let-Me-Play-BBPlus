@@ -34,13 +34,21 @@ namespace LetMePlayBBPlus
                     break;
                 case AnimStepType.StartShakingWall:
                     if (obj["intensity"] != null)
-                        step.speedMultiplier = obj["intensity"].Value<float>();
+                        step.intensity = obj["intensity"].Value<float>();
                     if (obj["interval"] != null)
-                        step.speedMultiplier = obj["interval"].Value<float>();
-                    if (obj["decaySpeedl"] != null)
-                        step.speedMultiplier = obj["decaySpeed"].Value<float>();
+                        step.interval = obj["interval"].Value<float>();
+                    if (obj["decaySpeed"] != null)
+                        step.decaySpeed = obj["decaySpeed"].Value<float>();
                     if (obj["duration"] != null)
-                        step.speedMultiplier = obj["duration"].Value<float>();
+                        step.duration = obj["duration"].Value<float>();
+                    break;
+                case AnimStepType.StartIncreasingAnger:
+                    if (obj["interval"] != null)
+                        step.interval = obj["interval"].Value<float>();
+                    break;
+                case AnimStepType.SaveAndHideMap:
+                    if (obj["tilesAmount"] != null)
+                        step.tilesAmount = obj["tilesAmount"].Value<int>();
                     break;
             }
 
@@ -67,6 +75,25 @@ namespace LetMePlayBBPlus
                     writer.WriteValue(step.speedMultiplier);
                     writer.WritePropertyName("enabled");
                     writer.WriteValue(step.enabled);
+                    break;
+
+                case AnimStepType.StartShakingWall:
+                    writer.WritePropertyName("intensity");
+                    writer.WriteValue(step.intensity);
+                    writer.WritePropertyName("interval");
+                    writer.WriteValue(step.interval);
+                    writer.WritePropertyName("decaySpeed");
+                    writer.WriteValue(step.decaySpeed);
+                    writer.WritePropertyName("duration");
+                    writer.WriteValue(step.duration);
+                    break;
+                case AnimStepType.StartIncreasingAnger:
+                    writer.WritePropertyName("interval");
+                    writer.WriteValue(step.interval);
+                    break;
+                case AnimStepType.SaveAndHideMap:
+                    writer.WritePropertyName("tilesAmount");
+                    writer.WriteValue(step.tilesAmount);
                     break;
             }
 

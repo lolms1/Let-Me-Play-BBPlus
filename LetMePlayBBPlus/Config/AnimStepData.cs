@@ -16,6 +16,10 @@ namespace LetMePlayBBPlus
         RestoreLights,
         StartShakingWall,
         StopShakingWall,
+        StartIncreasingAnger,
+        StopIncreasingAnger,
+        SaveAndHideMap,
+        RestoreMap,
         Cooldown,
     }
 
@@ -29,6 +33,7 @@ namespace LetMePlayBBPlus
         public float interval = 0.5f;
         public float decaySpeed = 4f;
         public float duration = 0f;
+        public int tilesAmount = 20;
     }
 
     public class AnimSequenceParams

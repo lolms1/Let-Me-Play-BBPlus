@@ -1,6 +1,7 @@
 using HarmonyLib;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -34,10 +35,12 @@ namespace LetMePlayBBPlus
 
         private float timer;
         private float anger;
+        private float savedAnger;
         private float cycleType2AngerRequirement;
         private int cycleType2Chance;
         private bool isRunning;
         private bool isInitialized;
+        private bool activeAngerIncrease = false;
         private int lastMainSilhouetteIndex = -1;
 
         private Canvas canvas;
@@ -46,6 +49,7 @@ namespace LetMePlayBBPlus
         private ReplayManager repMan;
         private LightManager lightMan;
         private WallShakeManager wallMan;
+        private MapManager mapMan;
 
         private bool isInGame;
         private int currentLevel = -1;
@@ -151,6 +155,7 @@ namespace LetMePlayBBPlus
             repMan = GetRepManager();
             lightMan = GetLightManager();
             wallMan = GetWallShakeManager();
+            mapMan = GetMapManager();
             repMan.EnableTimeScale();
             repMan.SaveAllPositions();
 
@@ -160,6 +165,8 @@ namespace LetMePlayBBPlus
             repMan.SetTimeScaleSmooth(1f, 0.03f);
             wallMan.StopShake();
             audSourceManMain.StopMusic();
+            mapMan.RestoreMap();
+            StopAngerIncrease();
 
             isRunning = false;
         }
@@ -205,7 +212,23 @@ namespace LetMePlayBBPlus
                         wallMan.StopShake();
                         break;
 
-                    case AnimStepType.Cooldown: // 9
+                    case AnimStepType.StartIncreasingAnger: // 9
+                        StartAngerIncrease(step.interval);
+                        break;
+
+                    case AnimStepType.StopIncreasingAnger: // 10
+                        StopAngerIncrease();
+                        break;
+
+                    case AnimStepType.SaveAndHideMap: // 11
+                        mapMan.SaveAndHideMap();
+                        break;
+
+                    case AnimStepType.RestoreMap: // 12
+                        mapMan.RestoreMap();
+                        break;
+
+                    case AnimStepType.Cooldown: // 13
                         yield return new WaitForSeconds(step.speedMultiplier);
                         break;
 
@@ -518,8 +541,21 @@ namespace LetMePlayBBPlus
 
         private void CancelCycle()
         {
+            if (wallMan != null)
+            {
+                wallMan.ForceStop();
+                wallMan = null;
+            }
+
+            if (mapMan != null)
+            {
+                mapMan.ForceStop();
+                mapMan = null;
+            }
+
             StopAllCoroutines();
             isRunning = false;
+            activeAngerIncrease = false;
 
             if (canvas != null)
             {
@@ -542,6 +578,38 @@ namespace LetMePlayBBPlus
                 repMan.Reset();
                 repMan = null;
             }
+        }
+
+        public void StartAngerIncrease(float increasePerSecond = 0.01f)
+        {
+            if (activeAngerIncrease) return;
+
+            Baldi baldi = UnityEngine.GameObject.FindAnyObjectByType<Baldi>();
+            if (baldi == null) return;
+            var angerField = AccessTools.Field(typeof(Baldi), "anger");
+            savedAnger = (float)angerField.GetValue(baldi);
+
+            activeAngerIncrease = true;
+            baldi.StartCoroutine(AngerIncreaseCoroutine(baldi, angerField, increasePerSecond));
+        }
+
+        private IEnumerator AngerIncreaseCoroutine(Baldi baldi, FieldInfo angerField, float increasePerSecond)
+        {
+            while (activeAngerIncrease)
+            {
+                float currentAnger = (float)angerField.GetValue(baldi);
+                currentAnger += increasePerSecond * Time.deltaTime;
+                angerField.SetValue(baldi, currentAnger);
+
+                yield return null;
+            }
+            angerField.SetValue(baldi, savedAnger);
+        }
+
+        public void StopAngerIncrease()
+        {
+            activeAngerIncrease = false;
+
         }
 
         private void AddToRecentQueue(string key)
@@ -580,8 +648,7 @@ namespace LetMePlayBBPlus
         }
         private LightManager GetLightManager()
         {
-            if (lightMan == null)
-                lightMan = new LightManager(Singleton<BaseGameManager>.Instance.Ec);
+            lightMan = new LightManager(Singleton<BaseGameManager>.Instance.Ec);
             return lightMan;
         }
         private WallShakeManager GetWallShakeManager()
@@ -589,6 +656,12 @@ namespace LetMePlayBBPlus
             if (wallMan == null)
                 wallMan = new WallShakeManager(Singleton<BaseGameManager>.Instance.Ec);
             return wallMan;
+        }
+        private MapManager GetMapManager()
+        {
+            if (mapMan == null)
+                mapMan = new MapManager(Singleton<BaseGameManager>.Instance.Ec, this);
+            return mapMan;
         }
         private float GetAnger()
         {

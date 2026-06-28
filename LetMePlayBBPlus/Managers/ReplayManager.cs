@@ -35,9 +35,7 @@ namespace LetMePlayBBPlus
             targetTimeScale = timeScale;
             ApplyTimeScale(timeScale);
             if (playerApply)
-            {
-                UpdatePlayerSlow(); 
-            }
+                UpdatePlayerSlow();
         }
 
         public void SetTimeScaleSmooth(float target, float changeSpeed = -1f)
@@ -70,6 +68,7 @@ namespace LetMePlayBBPlus
             ApplyTimeScale(currentTimeScale);
             UpdatePlayerSlow();
             isScaling = false;
+            smoothCoroutine = null;
         }
 
         private void ApplyTimeScale(float scale)
@@ -80,16 +79,19 @@ namespace LetMePlayBBPlus
 
         public void EnableTimeScale()
         {
+            if (ec == null) return;
             ec.AddTimeScale(timeScaleModifier);
         }
 
         public void DisableTimeScale()
         {
+            if (ec == null) return;
             ec.RemoveTimeScale(timeScaleModifier);
         }
-
         private void UpdatePlayerSlow()
         {
+            if (Singleton<CoreGameManager>.Instance == null) return;
+
             float slowFactor = currentTimeScale;
 
             for (int i = 0; i < Singleton<CoreGameManager>.Instance.setPlayers; i++)
@@ -97,17 +99,21 @@ namespace LetMePlayBBPlus
                 PlayerManager player = Singleton<CoreGameManager>.Instance.GetPlayer(i);
                 if (player == null) continue;
 
-                Entity entity = player.plm.Entity;
+                Entity entity = player.plm?.Entity;
                 if (entity == null) continue;
 
                 if (playerSlowMods.ContainsKey(entity))
                 {
-                    entity.ExternalActivity.moveMods.Remove(playerSlowMods[entity]);
+                    if (entity.ExternalActivity != null)
+                        entity.ExternalActivity.moveMods.Remove(playerSlowMods[entity]);
                 }
 
                 MovementModifier mod = new MovementModifier(Vector3.zero, slowFactor);
-                entity.ExternalActivity.moveMods.Add(mod);
-                playerSlowMods[entity] = mod;
+                if (entity.ExternalActivity != null)
+                {
+                    entity.ExternalActivity.moveMods.Add(mod);
+                    playerSlowMods[entity] = mod;
+                }
             }
         }
 
@@ -115,14 +121,12 @@ namespace LetMePlayBBPlus
         {
             foreach (var kvp in playerSlowMods)
             {
-                if (kvp.Key != null && kvp.Key.ExternalActivity != null)
-                {
-                    kvp.Key.ExternalActivity.moveMods.Remove(kvp.Value);
-                }
+                if (kvp.Key == null) continue;
+                if (kvp.Key.ExternalActivity == null) continue;
+                kvp.Key.ExternalActivity.moveMods.Remove(kvp.Value);
             }
             playerSlowMods.Clear();
         }
-
         public void SaveAllPositions()
         {
             savedPositions.Clear();
@@ -138,11 +142,12 @@ namespace LetMePlayBBPlus
                     savedPositions[entity] = entity.transform.position;
             }
 
+            if (Singleton<CoreGameManager>.Instance == null) return;
             for (int i = 0; i < Singleton<CoreGameManager>.Instance.setPlayers; i++)
             {
                 PlayerManager player = Singleton<CoreGameManager>.Instance.GetPlayer(i);
                 if (player == null) continue;
-                Entity entity = player.plm.Entity;
+                Entity entity = player.plm?.Entity;
                 if (entity != null)
                     savedPositions[entity] = entity.transform.position;
             }
@@ -160,6 +165,7 @@ namespace LetMePlayBBPlus
         public void SavePlayerRotations()
         {
             savedRotations.Clear();
+            if (Singleton<CoreGameManager>.Instance == null) return;
 
             for (int i = 0; i < Singleton<CoreGameManager>.Instance.setPlayers; i++)
             {
@@ -191,15 +197,16 @@ namespace LetMePlayBBPlus
 
             ApplyTimeScale(1f);
             if (ec != null)
+            {
                 ec.RemoveTimeScale(timeScaleModifier);
+                ec = null;
+            }
 
             currentTimeScale = 1f;
             targetTimeScale = 1f;
 
             savedPositions.Clear();
             savedRotations.Clear();
-
-            ec = null;
         }
     }
 }
