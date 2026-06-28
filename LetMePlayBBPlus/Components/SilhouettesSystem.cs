@@ -223,7 +223,7 @@ namespace LetMePlayBBPlus
                         break;
 
                     case AnimStepType.SaveAndHideMap: // 11
-                        mapMan.SaveAndHideMap();
+                        mapMan.SaveAndHideMap(step.tilesAmount);
                         break;
 
                     case AnimStepType.RestoreMap: // 12
