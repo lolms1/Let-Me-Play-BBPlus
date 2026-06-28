@@ -32,7 +32,7 @@ namespace LetMePlayBBPlus
                     if (obj["enabled"] != null)
                         step.enabled = obj["enabled"].Value<bool>();
                     break;
-                case AnimStepType.StartShakingWall:
+                case AnimStepType.StartShakingShaders:
                     if (obj["intensity"] != null)
                         step.intensity = obj["intensity"].Value<float>();
                     if (obj["interval"] != null)
@@ -77,7 +77,7 @@ namespace LetMePlayBBPlus
                     writer.WriteValue(step.enabled);
                     break;
 
-                case AnimStepType.StartShakingWall:
+                case AnimStepType.StartShakingShaders:
                     writer.WritePropertyName("intensity");
                     writer.WriteValue(step.intensity);
                     writer.WritePropertyName("interval");

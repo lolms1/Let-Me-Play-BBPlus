@@ -204,11 +204,11 @@ namespace LetMePlayBBPlus
                         lightMan.RestoreLights();
                         break;
 
-                    case AnimStepType.StartShakingWall: // 7
+                    case AnimStepType.StartShakingShaders: // 7
                         wallMan.StartShake(step.intensity, step.interval, step.decaySpeed, step.duration);
                         break;
 
-                    case AnimStepType.StopShakingWall: // 8
+                    case AnimStepType.StopShakingShaders: // 8
                         wallMan.StopShake();
                         break;
 
