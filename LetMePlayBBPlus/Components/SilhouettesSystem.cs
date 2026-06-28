@@ -89,11 +89,13 @@ namespace LetMePlayBBPlus
             int level = GetCurrentLevel();
             bool inGame = IsInGame();
 
+            // Смена уровня — немедленно останавливаем всё и пропускаем кадр
             if (level != currentLevel)
             {
                 currentLevel = level;
                 isInGame = false;
-                isRunning = false;
+                CancelCycle();
+                return;
             }
 
             if (inGame && !isInGame)
@@ -654,7 +656,7 @@ namespace LetMePlayBBPlus
         private WallShakeManager GetWallShakeManager()
         {
             if (wallMan == null)
-                wallMan = new WallShakeManager(Singleton<BaseGameManager>.Instance.Ec);
+                wallMan = new WallShakeManager(this);
             return wallMan;
         }
         private MapManager GetMapManager()

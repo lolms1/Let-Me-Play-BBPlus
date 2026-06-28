@@ -30,7 +30,7 @@ namespace LetMePlayBBPlus
             this.mapSize = map.size;
         }
 
-        public void SaveAndHideMap(int requiredAmount = 20)
+        public void SaveAndHideMap(int requiredAmount = 50)
         {
             hiddenTiles = new bool[mapSize.x, mapSize.z];
 
@@ -131,7 +131,7 @@ namespace LetMePlayBBPlus
             PlayerManager player = Singleton<CoreGameManager>.Instance.GetPlayer(0);
             if (player == null) return;
 
-            baldi.transform.position = player.transform.position + player.transform.forward * 5f;
+            baldi.transform.position = player.transform.position;
         }
 
         private void CreateCounterUI()
