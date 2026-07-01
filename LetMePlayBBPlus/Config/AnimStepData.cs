@@ -16,6 +16,8 @@ namespace LetMePlayBBPlus
         RestoreLights,
         StartShakingShaders,
         StopShakingShaders,
+        StartFlashingShaders,
+        StopFlashingShaders,
         StartIncreasingAnger,
         StopIncreasingAnger,
         SaveAndHideMap,

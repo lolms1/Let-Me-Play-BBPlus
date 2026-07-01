@@ -1,12 +1,22 @@
 {
-  "cooldown": 5.0,
-  "phase1Duration": 3.3,
-  "spawnInterval": 0.55,
+  "cooldown": 1.0,
+  "phase1Duration": 15.0,
+  "spawnInterval": 0.5,
   "mainStopTime": 2.0,
-  "pauseAtEdgeTime": 0.7,
+  "pauseAtEdgeTime": 1.0,
   "silhouetteSpeed": 800.0,
+  "coefficient": 1.0,
+  "cooldownCoefficient": 1.5,
+  "multiplierLogBase": 6.0,
+  "cooldownMultiplierLogBase": 6.0,
+  "starterAnger": 1.5,
   "maxRecentSilhouettes": 4,
+  "CycleType2AngerRequirement": 0.0,
+  "CycleType2Chance": 1,
   "pausingSilhouettes": [
-    "silhouette0"
-  ]
+    "silhouette0",
+    "silhouette1"
+  ],
+  "RandomAudioSelecting": false,
+  "AudioIndex": 2
 }

@@ -1,0 +1,214 @@
+{
+  "sequences": {
+    "animAudioType2_0": {
+      "parameters": {
+        "phase1Duration": null,
+        "spawnInterval": null,
+        "silhouetteSpeed": null,
+        "mainStopTime": null,
+        "pauseAtEdgeTime": null,
+        "cooldown": null
+      },
+      "steps": [
+        {
+          "type": "Phase1"
+        },
+        {
+          "type": "FogFlash",
+          "speedMultiplier": 2.0,
+          "enabled": true
+        },
+        {
+          "type": "Replay",
+          "speedMultiplier": 2.0
+        },
+        {
+          "type": "FogFlash",
+          "speedMultiplier": 0.7,
+          "enabled": true
+        },
+        {
+          "type": "Replay",
+          "speedMultiplier": 0.7
+        },
+        {
+          "type": "Phase2"
+        },
+        {
+          "type": "SpawnCharacter"
+        }
+      ]
+    },
+    "animAudioType2_1": {
+      "parameters": {
+        "phase1Duration": 6.0,
+        "spawnInterval": 0.3,
+        "silhouetteSpeed": 1200,
+        "pauseAtEdgeTime": 0.9
+      },
+      "steps": [
+        {
+          "type": "Phase1",
+          "speedMultiplier": 1.0
+        },
+        {
+          "type": "FogFlash",
+          "speedMultiplier": 1.0,
+          "enabled": true
+        },
+        {
+          "type": "SaveAndDisableLights"
+        },
+        {
+          "type": "StartShakingShaders",
+          "intensity": 1,
+          "interval": 0.44,
+          "decaySpeed": 4,
+          "duration": 0
+        },
+        {
+          "type": "SaveAndHideMap",
+          "tileAmount": 60
+        },
+        {
+          "type": "StartIncreasingAnger",
+          "interval": 10.0
+        },
+        {
+          "type": "Replay",
+          "speedMultiplier": 0.27
+        },
+        {
+          "type": "StopIncreasingAnger"
+        },
+        {
+          "type": "FogFlash",
+          "speedMultiplier": 1.0,
+          "enabled": true
+        },
+        {
+          "type": "RestoreLights"
+        },
+        {
+          "type": "RestoreMap"
+        },
+        {
+          "type": "Phase2"
+        },
+        {
+          "type": "SpawnCharacter"
+        }
+      ]
+    },
+    "animAudioType2_2": {
+      "parameters": {
+        "phase1Duration": 5.5,
+        "spawnInterval": 0.6,
+        "silhouetteSpeed": 1200,
+        "pauseAtEdgeTime": 0.9
+      },
+      "steps": [
+        {
+          "type": "StartShakingShaders",
+          "intensity": 1,
+          "interval": 0.44,
+          "decaySpeed": 4,
+          "duration": 0
+        },
+        {
+          "type": "Phase1"
+        },
+        {
+          "type": "StartShakingShaders",
+          "intensity": 200,
+          "interval": 0.001,
+          "decaySpeed": 16,
+          "duration": 9
+        },
+        {
+          "type": "StartFlashingShaders",
+          "duration": 9,
+          "intensity": 0.2
+        },
+        {
+          "type": "Replay",
+          "speedMultiplier": 9
+        },
+        {
+          "type": "StopFlashingShaders"
+        },
+        {
+          "type": "StartShakingShaders",
+          "intensity": 1,
+          "interval": 0.44,
+          "decaySpeed": 4,
+          "duration": 0
+        },
+        {
+          "type": "Phase1"
+        },
+        {
+          "type": "StartShakingShaders",
+          "intensity": 200,
+          "interval": 0.001,
+          "decaySpeed": 16,
+          "duration": 9
+        },
+        {
+          "type": "StartFlashingShaders",
+          "duration": 9,
+          "intensity": 0.2
+        },
+        {
+          "type": "Replay",
+          "speedMultiplier": 9
+        },
+        {
+          "type": "StopFlashingShaders"
+        },
+        {
+          "type": "StartShakingShaders",
+          "intensity": 200,
+          "interval": 0.44,
+          "decaySpeed": 4,
+          "duration": 0
+        },
+        {
+          "type": "Phase1"
+        },
+        {
+          "type": "StartShakingShaders",
+          "intensity": 5,
+          "interval": 0.001,
+          "decaySpeed": 16,
+          "duration": 9
+        },
+        {
+          "type": "StartFlashingShaders",
+          "duration": 9,
+          "intensity": 0.2
+        },
+        {
+          "type": "Replay",
+          "speedMultiplier": 9
+        },
+        {
+          "type": "StopFlashingShaders"
+        },
+        {
+          "type": "StartShakingShaders",
+          "intensity": 1,
+          "interval": 0.44,
+          "decaySpeed": 4,
+          "duration": 0
+        },
+        {
+          "type": "Phase2"
+        },
+        {
+          "type": "SpawnCharacter"
+        }
+      ]
+    }
+  }
+}

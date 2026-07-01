@@ -94,7 +94,8 @@ namespace LetMePlayBBPlus
             isCounting = false;
             DestroyCounterUI();
 
-            MapUpdateBlockerPatch.BlockUpdate = false;
+            MapUpdateBlockerPatch.BlockUpdate = false;  
+            if (hiddenTiles == null) return;
 
             for (int x = 0; x < mapSize.x; x++)
             {

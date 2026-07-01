@@ -50,6 +50,12 @@ namespace LetMePlayBBPlus
                     if (obj["tilesAmount"] != null)
                         step.tilesAmount = obj["tilesAmount"].Value<int>();
                     break;
+                case AnimStepType.StartFlashingShaders:
+                    if (obj["duration"] != null)
+                        step.duration = obj["duration"].Value<float>();
+                    if (obj["intensity"] != null)
+                        step.intensity = obj["intensity"].Value<float>();
+                    break;
             }
 
             return step;
@@ -94,6 +100,12 @@ namespace LetMePlayBBPlus
                 case AnimStepType.SaveAndHideMap:
                     writer.WritePropertyName("tilesAmount");
                     writer.WriteValue(step.tilesAmount);
+                    break;
+                case AnimStepType.StartFlashingShaders:
+                    writer.WritePropertyName("duration");
+                    writer.WriteValue(step.duration);
+                    writer.WritePropertyName("intensity");
+                    writer.WriteValue(step.intensity);
                     break;
             }
 

@@ -89,7 +89,6 @@ namespace LetMePlayBBPlus
             int level = GetCurrentLevel();
             bool inGame = IsInGame();
 
-            // Смена уровня — немедленно останавливаем всё и пропускаем кадр
             if (level != currentLevel)
             {
                 currentLevel = level;
@@ -165,7 +164,8 @@ namespace LetMePlayBBPlus
             yield return StartCoroutine(ExecuteSequence(sequence));
 
             repMan.SetTimeScaleSmooth(1f, 0.03f);
-            wallMan.StopShake();
+            wallMan.StopShake();    
+            wallMan.StopFlash();
             audSourceManMain.StopMusic();
             mapMan.RestoreMap();
             StopAngerIncrease();
@@ -214,23 +214,31 @@ namespace LetMePlayBBPlus
                         wallMan.StopShake();
                         break;
 
-                    case AnimStepType.StartIncreasingAnger: // 9
+                    case AnimStepType.StartFlashingShaders: // 9
+                        wallMan.StartFlash(step.duration, step.intensity);
+                        break;
+
+                    case AnimStepType.StopFlashingShaders: // 10
+                        wallMan.StopFlash();
+                        break;
+
+                    case AnimStepType.StartIncreasingAnger: // 11
                         StartAngerIncrease(step.interval);
                         break;
 
-                    case AnimStepType.StopIncreasingAnger: // 10
+                    case AnimStepType.StopIncreasingAnger: // 12
                         StopAngerIncrease();
                         break;
 
-                    case AnimStepType.SaveAndHideMap: // 11
+                    case AnimStepType.SaveAndHideMap: // 13
                         mapMan.SaveAndHideMap(step.tilesAmount);
-                        break;
+                        break; 
 
-                    case AnimStepType.RestoreMap: // 12
+                    case AnimStepType.RestoreMap: // 14
                         mapMan.RestoreMap();
                         break;
 
-                    case AnimStepType.Cooldown: // 13
+                    case AnimStepType.Cooldown: // 15
                         yield return new WaitForSeconds(step.speedMultiplier);
                         break;
 
@@ -545,7 +553,7 @@ namespace LetMePlayBBPlus
         {
             if (wallMan != null)
             {
-                wallMan.ForceStop();
+                wallMan.ForceStopAll();
                 wallMan = null;
             }
 
