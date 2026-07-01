@@ -22,6 +22,7 @@ namespace LetMePlayBBPlus
         StopIncreasingAnger,
         SaveAndHideMap,
         RestoreMap,
+        SavePositions,
         Cooldown,
     }
 

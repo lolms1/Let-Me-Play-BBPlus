@@ -238,7 +238,11 @@ namespace LetMePlayBBPlus
                         mapMan.RestoreMap();
                         break;
 
-                    case AnimStepType.Cooldown: // 15
+                    case AnimStepType.SavePositions: // 15
+                        repMan.SaveAllPositions();
+                        break;
+
+                    case AnimStepType.Cooldown: // 16
                         yield return new WaitForSeconds(step.speedMultiplier);
                         break;
 
