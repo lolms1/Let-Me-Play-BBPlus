@@ -13,9 +13,11 @@ Basically (games), it's more like creating a TikTok edit, but it happens right i
 
 ### Gameplay effects
 
-- **Time scale manipulation** — the game world and NPCs slow down or speed up during the cycle via `ReplayManager`. The player's movement speed is adjusted to match.
+- **Time scale manipulation** - the game world and NPCs slow down or speed up during the cycle via `ReplayManager`. The player's movement speed is adjusted to match.
 - **Replay effect** — all entity positions (NPCs and players) are saved at the start of the cycle. Between replay passes, entities are teleported back to those positions, creating a rewind illusion.
 - **Fog flashes** — fog fades in and out between replay passes for visual effect.
+- **Shader glitch** — wall geometry glitches on beat, with configurable intensity, interval and decay speed. Like in null bossfight 
+- **Light control** — lights can be disabled and restored as part of a sequence.
 - **Character spawning** — the main silhouette determines which character gets spawned. If the character already exists in the level, they're teleported to the player instead.
 
 ## Install
@@ -43,62 +45,57 @@ Defines a custom animation sequence for each audio track. When a Type 2 cycle pl
   "sequences": {
     "animAudioType2_0": {
       "parameters": {
-        "phase1Duration": 3.3,
-        "spawnInterval": 0.55,
-        "silhouetteSpeed": 800,
-        "pauseAtEdgeTime": 0.7
+        "phase1Duration": null,
+        "spawnInterval": null,
+        "silhouetteSpeed": null,
+        "mainStopTime": null,
+        "pauseAtEdgeTime": null
       },
       "steps": [
         {
-          "type": 0,
-          "speedMultiplier": 1.0
+          "type": "Phase1"
         },
         {
-          "type": 1,
+          "type": "FogFlash",
+          "speedMultiplier": 2.0,
+          "enabled": true
+        },
+        {
+          "type": "Replay",
           "speedMultiplier": 2.0
         },
         {
-          "type": 2,
-          "speedMultiplier": 2.0
+          "type": "FogFlash",
+          "speedMultiplier": 0.7,
+          "enabled": true
         },
         {
-          "type": 1,
+          "type": "Replay",
           "speedMultiplier": 0.7
         },
         {
-          "type": 2,
-          "speedMultiplier": 0.7
+          "type": "Phase2"
         },
         {
-          "type": 3,
-          "speedMultiplier": 1.0
-        },
-        {
-          "type": 4,
-          "speedMultiplier": 1.0
+          "type": "SpawnCharacter"
         }
       ]
     }
   }
 }
 ```
-
-**Parameters** — override the `Config.json` values for the duration of this sequence only. Set to `null` to use the base value from `Config.json`.
-
-**Steps:**
-
-| Type | Description |
-|---|---|
-| 0 | `Phase1`: Runs the fast silhouette phase and records which sprites appeared |
-| 1 | `Replay`: Replays the recorded silhouettes at `speedMultiplier` speed |
-| 2 | `FogFlash`: Fades fog in, resets entity positions, fades fog out |
-| 3 | `Phase2`: Shows the main silhouette that determines which character spawns |
-| 4 | `SpawnCharacter`: Spawns or teleports the character |
-
+**Parameters** — override the `Config.json` values for the duration of this sequence only. Set a field to `null` to use the base value from `Config.json`.
+ 
+**Steps** — a sequence is built from an ordered list of step types. Each type only accepts the fields that are relevant to it — extra fields are ignored. There are over 16 step types in total; a full reference with all fields and defaults is located inside the mod folder at:
+ 
+```
+BALDI_Data/StreamingAssets/Modded/lolms.bbplusmod.letmeplaybbplus/
+```
+ 
 **Rules enforced at load time:**
-- `Replay` cannot appear before `Phase1` — it gets replaced with `Phase1` automatically.
-- `SpawnCharacter` cannot appear before `Phase2` — it gets replaced with `Phase2` automatically.
-
+- `Replay` cannot appear before `Phase1` — replaced with `Phase1` automatically.
+- `SpawnCharacter` cannot appear before `Phase2` — replaced with `Phase2` automatically.
+ 
 New audio files added to `Audio/AnimationCycleType2/` are detected automatically on the next launch and get a default sequence entry in `AnimEditor.json`.
 
 ---
