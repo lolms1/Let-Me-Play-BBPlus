@@ -6,8 +6,7 @@
         "spawnInterval": null,
         "silhouetteSpeed": null,
         "mainStopTime": null,
-        "pauseAtEdgeTime": null,
-        "cooldown": null
+        "pauseAtEdgeTime": null
       },
       "steps": [
         {
@@ -72,7 +71,7 @@
         },
         {
           "type": "StartIncreasingAnger",
-          "interval": 10.0
+          "intensity": 10.0
         },
         {
           "type": "Replay",

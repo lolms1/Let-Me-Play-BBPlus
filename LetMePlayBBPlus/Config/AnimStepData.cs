@@ -46,7 +46,6 @@ namespace LetMePlayBBPlus
         public float? silhouetteSpeed;
         public float? mainStopTime;
         public float? pauseAtEdgeTime;
-        public float? cooldown;
     }
 
     public class AnimSequence

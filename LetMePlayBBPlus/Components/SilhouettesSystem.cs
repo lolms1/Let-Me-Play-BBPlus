@@ -223,7 +223,7 @@ namespace LetMePlayBBPlus
                         break;
 
                     case AnimStepType.StartIncreasingAnger: // 11
-                        StartAngerIncrease(step.interval);
+                        StartAngerIncrease(step.intensity);
                         break;
 
                     case AnimStepType.StopIncreasingAnger: // 12

@@ -1,0 +1,349 @@
+HOW ANIM EDITOR WORKS
+----------------------
+AnimEditor.json lets you build a custom animation sequence for each Type 2
+audio track. When the mod picks a track to play, it reads the sequence assigned
+to that track and executes each step in order.
+
+This means every track can feel completely different — one might replay
+silhouettes twice at different speeds, another might kill the lights, shake the
+walls, and hide the map.
+
+Each sequence has two parts:
+
+  parameters  — optional overrides for timing values from Config.json.
+                Set a field to null to use the base value from Config.json.
+                These only apply for the duration of this sequence.
+
+  steps       — an ordered list of actions to execute one by one.
+                Each step has a "type" field and only the properties
+                relevant to that type.
+
+New audio files dropped into Audio/AnimationCycleType2/ are detected on the
+next launch and automatically get a default sequence added to AnimEditor.json.
+
+
+SEQUENCE PARAMETERS
+-------------------
+All fields are optional (null = use Config.json base value).
+
+  phase1Duration    How long Phase 1 lasts (seconds).
+  spawnInterval     Time between silhouette spawns in Phase 1 (seconds).
+  silhouetteSpeed   Movement speed of silhouettes across the screen.
+  mainStopTime      How long the main silhouette holds in the center.
+  pauseAtEdgeTime   How long a pausing silhouette holds at the screen edge.
+
+
+VALIDATION RULES
+----------------
+The loader checks every sequence on startup and auto-fixes these mistakes:
+
+  - Replay before Phase1     → replaced with Phase1, error logged
+  - SpawnCharacter before Phase2 → replaced with Phase2, error logged
+
+
+================================================================================
+  STEP TYPES
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  Phase1
+  Records and plays the fast silhouette sequence.
+────────────────────────────────────────────────────────────────────────────────
+  Runs Phase 1: silhouettes slide across the screen one by one for
+  phase1Duration seconds. The order and sprites shown are recorded internally
+  so Replay steps can play them back later.
+
+  No properties.
+
+  Example:
+    { 
+	"type": "Phase1"
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  Replay
+  Replays the silhouettes recorded by Phase1.
+────────────────────────────────────────────────────────────────────────────────
+  Plays back the same silhouettes that appeared in Phase 1, in the same order.
+  Cannot appear before Phase1 in the sequence.
+
+  Properties:
+    speedMultiplier (float)
+      How fast the replay runs relative to normal speed.
+      2.0 = twice as fast, 0.5 = half speed.
+      The spawn interval between silhouettes is also scaled accordingly.
+
+  Example:
+    {  
+	 "type": "Replay",
+	"speedMultiplier": 2.0
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  FogFlash
+  Fades fog in, changes game speed, resets positions, fades fog out.
+────────────────────────────────────────────────────────────────────────────────
+  The main transition step between replays. Fog fades in to mask the moment
+  when all entities are teleported back to their saved positions (creating the
+  rewind illusion), then fades out at the new game speed.
+
+  Properties:
+    speedMultiplier (float)
+      The time scale to switch to after the fog fades in.
+      Affects NPCs and environment speed. 2.0 = 2x speed, 0.5 = half speed.
+
+    enabled (bool)
+      If true, the player's movement speed is also scaled by speedMultiplier.
+      If false, the world and NPCs run at the new speed but the player moves
+      at normal speed.
+
+  Example:
+    { 
+	"type": "FogFlash", 
+	"speedMultiplier": 2.0,
+	 "enabled": true
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  Phase2
+  Shows the main silhouette.
+────────────────────────────────────────────────────────────────────────────────
+  Displays a single silhouette from the MainSilhouettes/ folder. It slides in
+  and stops in the center of the screen for mainStopTime seconds.
+  The silhouette shown determines which character SpawnCharacter will spawn.
+
+  No properties.
+
+  Example:
+    { 
+	"type": "Phase2"
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  SpawnCharacter
+  Spawns or teleports the character shown in Phase2.
+────────────────────────────────────────────────────────────────────────────────
+  Spawns the character that corresponds to the silhouette shown in Phase 2
+  in front of the player. If that character already exists in the level,
+  they are teleported to the player instead.
+  Cannot appear before Phase2 in the sequence.
+
+  No properties.
+
+  Example:
+    { 
+	"type": "SpawnCharacter"
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  SaveAndDisableLights
+  Saves the current light state and turns all lights off.
+────────────────────────────────────────────────────────────────────────────────
+  No properties.
+
+  Example:
+    {
+	 "type": "SaveAndDisableLights"
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  RestoreLights
+  Restores lights to the state saved by SaveAndDisableLights.
+────────────────────────────────────────────────────────────────────────────────
+  No properties.
+
+  Example:
+    { 
+	"type": "RestoreLights"
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  StartShakingShaders
+  Starts a repeating wall shake effect.
+────────────────────────────────────────────────────────────────────────────────
+  Recreates the wall-shaking shader effect from the Null bossfight in
+  Baldi's Basics Classic Remastered — walls periodically shift and distort,
+  then settle back. Runs until StopShakingShaders is called (or duration
+  expires if set).
+
+  Properties:
+    intensity (float)
+      How far the wall geometry randomly shifts on each beat.
+      Higher = more violent distortion.
+
+    interval (float)
+      Time in seconds between each shake beat.
+      Lower = faster, more frantic shaking.
+
+    decaySpeed (float)
+      How quickly the distortion fades back to normal between beats.
+      Higher = snappier return to normal, lower = slow lingering distortion.
+
+    duration (float)
+      How long the shaker runs in seconds.
+      Set to 0 to run indefinitely until a StopShakingShaders step.
+
+  Example:
+    { 
+	"type": "StartShakingShaders", 
+	"intensity": 0.1, 
+	"interval": 0.5,
+        "decaySpeed": 4.0, 
+	"duration": 0.0 
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  StopShakingShaders
+  Stops the wall shake effect.
+────────────────────────────────────────────────────────────────────────────────
+  Smoothly fades out the shader distortion.
+
+  No properties.
+
+  Example:
+    { 
+	"type": "StopShakingShaders" 
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  StartFlashingShaders
+  Starts a color glitch effect on all sprites and surfaces.
+────────────────────────────────────────────────────────────────────────────────
+  Randomly shifts the colors of all game sprites and world surfaces — the familiar
+  color glitching effect that plays at the end of BB Plus when
+  Baldi congratulates the player. Runs until StopFlashingShaders is called
+  (or duration expires if set).
+
+  Properties:
+    intensity (float)
+      How strongly colors are shifted.
+
+    duration (float)
+      How long the effect runs in seconds.
+      Set to 0 to run indefinitely until a StopFlashingShaders step.
+
+  Example:
+    {
+	"type": "StartFlashingShaders", 
+	"intensity": 0.5, 
+	"duration": 0.0
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  StopFlashingShaders
+  Stops the color glitch effect.
+────────────────────────────────────────────────────────────────────────────────
+  Also called automatically when the full Type 2 cycle ends.
+
+  No properties.
+
+  Example:
+    {
+	 "type": "StopFlashingShaders"
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  StartIncreasingAnger
+  Starts continuously increasing Baldi's anger over time.
+────────────────────────────────────────────────────────────────────────────────
+  Raises Baldi's anger every frame at a fixed rate until StopIncreasingAnger
+  is called.
+
+  Properties:
+    intensity (float)
+      How much anger is added per second.
+
+  Example:
+    { 
+	"type": "StartIncreasingAnger", 
+	"intensity": 1.0
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  StopIncreasingAnger
+  Stops the anger increase started by StartIncreasingAnger.
+────────────────────────────────────────────────────────────────────────────────
+  No properties.
+
+  Example:
+    { 
+	"type": "StopIncreasingAnger"
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  SaveAndHideMap
+  Hides the player's discovered map and challenges them to rediscover it.
+────────────────────────────────────────────────────────────────────────────────
+  Saves the current state of the explored map, hides all discovered tiles,
+  and starts a counter. The player must rediscover the required number of
+  map tiles to survival. If they fail to do so before the cycle
+  ends, Baldi instantly kill a player.
+
+  Properties:
+    tilesAmount (int)
+      How many map tiles the player must rediscover.
+
+  Example:
+    { 
+	"type": "SaveAndHideMap", 
+	"tilesAmount": 20
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  RestoreMap
+  Immediately restores the map with checking the required tile count.
+────────────────────────────────────────────────────────────────────────────────
+  No properties.
+
+  Example:
+    { 
+	"type": "RestoreMap" 
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  SavePositions
+  Saves the current positions of all entities.
+────────────────────────────────────────────────────────────────────────────────
+  Saves positions of all NPCs and players so FogFlash can teleport them back
+  during the rewind. Normally this happens automatically at the start of the
+  cycle, but you can use this step to update the saved snapshot mid-sequence.
+
+  No properties.
+
+  Example:
+    { 
+	"type": "SavePositions"
+    }
+
+
+────────────────────────────────────────────────────────────────────────────────
+  Cooldown
+  Waits for a fixed amount of time.
+────────────────────────────────────────────────────────────────────────────────
+  Pauses the sequence for the specified number of seconds before continuing
+  to the next step.
+
+  Properties:
+    speedMultiplier (float)
+      Duration of the pause in seconds.
+
+  Example:
+    { 
+	"type": "Cooldown", 
+	"speedMultiplier": 1.5
+    }

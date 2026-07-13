@@ -1,0 +1,137 @@
+HOW THE MOD WORKS, (skip this part if you need info for each variable)
+-----------------
+Periodically during gameplay, the mod triggers an animation cycle. There are
+two cycle types:
+
+  TYPE 1 — Standard cycle
+    Phase 1: A sequence of silhouettes slides across the screen from right
+             to left. These are randomly picked sprites from the Silhouettes/
+             folder.
+    Phase 2: A single "main" silhouette (from MainSilhouettes/) stops in the
+             center of the screen. The character shown determines who gets
+             spawned in front of the player.
+
+  TYPE 2 — Extended cycle (requires enough anger, see below)
+    Plays a music track and runs a fully custom sequence of steps defined in
+    AnimEditor.json. This can include Phase 1, replays of the same silhouettes
+    at different speeds, fog effects, shader glitches (like in null bossfight) and more.
+    See AnimEditor info.txt for a full step reference.
+
+    REPLAY: The silhouettes shown during Phase 1 are recorded. A Replay step
+    plays them back in the same order, but can be sped up or slowed down via
+    speedMultiplier in AnimEditor.json.
+
+The timing and behavior of all cycles is controlled by Config.json.
+As Baldi's anger increases, cycles become faster and more intense — the
+anger-based scaling is explained in the ANGER SCALING section below.
+
+
+================================================================================
+  CONFIG
+================================================================================
+
+cooldown
+  How many seconds pass between animation cycles.
+  This is the BASE value — actual cooldown is reduced by anger scaling.
+
+phase1Duration
+  How long Phase 1 lasts in seconds (the fast silhouette sequence).
+  This is the BASE value — scaled by anger.
+
+spawnInterval
+  Time in seconds between each silhouette spawn during Phase 1.
+  This is the BASE value — scaled by anger.
+
+mainStopTime
+  How long the main silhouette (Phase 2) holds in the center of the screen before the cycle continues.
+  This is the BASE value — scaled by anger.
+
+pauseAtEdgeTime
+  Some silhouettes are marked as "pausing" in pausingSilhouettes (see below).
+  When one appears, it slides in from the right and stops at the screen edge
+  for this many seconds before continuing off screen.
+  The next silhouette spawn is also delayed by this amount.
+  This is the BASE value — scaled by anger.
+
+silhouetteSpeed
+  Base movement speed of silhouettes across the screen (pixels per second).
+  This is the BASE value — scaled by anger.
+
+
+================================================================================
+  ANGER SCALING
+================================================================================
+
+As Baldi gets angrier, the animation cycles speed up automatically.
+The scaling formula uses a logarithm so the effect grows gradually (like in my previous mod for No schoolhouse for students):
+
+  multiplier     = Log(starterAnger + anger, multiplierLogBase) * coefficient
+  cooldownMult   = Log(starterAnger + anger, cooldownMultiplierLogBase) * cooldownCoefficient
+
+  actual phase1Duration  = phase1Duration  / max(multiplier, 1)
+  actual spawnInterval   = spawnInterval   / multiplier
+  actual silhouetteSpeed = silhouetteSpeed * multiplier
+  actual mainStopTime    = mainStopTime    / max(multiplier, 1)
+  actual pauseAtEdgeTime = pauseAtEdgeTime / multiplier
+  actual cooldown        = cooldown        / max(cooldownMult, 1)
+
+coefficient
+  Scales how strongly anger affects cycle speed (phase duration, silhouette
+  speed, spawn interval). Higher value = anger has more impact.
+
+cooldownCoefficient
+  Scales how strongly anger reduces the cooldown between cycles.
+  Higher value = cycles trigger more frequently as anger rises.
+
+multiplierLogBase
+  The logarithm base used for the speed/duration multiplier.
+  Higher base = the multiplier grows more slowly with anger.
+
+cooldownMultiplierLogBase
+  The logarithm base used for the cooldown multiplier.
+  Higher base = cooldown reduction grows more slowly with anger.
+
+starterAnger
+  An offset added to Baldi's anger before the log is calculated.
+  Prevents the multiplier from being zero or negative at low anger values.
+  Also sets a "floor" — the minimum effective anger even when Baldi is calm.
+
+
+
+maxRecentSilhouettes
+  How many recently shown silhouettes the mod remembers.
+  A silhouette that was shown recently will not be picked again until it
+  falls out of this history. Prevents the same shadow from repeating too often.
+
+pausingSilhouettes
+  A list of silhouette identifiers that use the "pause at edge" behaviour
+  instead of flying straight through.
+  Silhouettes are indexed by their load order — the mod loads files from the
+  Silhouettes/ folder sorted alphabetically, so "silhouette0" refers to the
+  first file alphabetically, "silhouette1" to the second, and so on.
+  Files named with special characters or "!" come before letters, so they
+  load first. For example, "!!!important0.png" would be "silhouette0".
+
+CycleType2AngerRequirement
+  Minimum Baldi anger level required for a Type 2 cycle to be able to trigger.
+  Below this value only Type 1 cycles play.
+
+CycleType2Chance
+  The probability of a Type 2 cycle triggering when anger is high enough.
+  Calculated as 1-in-N: a value of 1 means it always triggers (when anger
+  requirement is met), a value of 3 means a 1 in 3 chance, and so on.
+
+
+================================================================================
+  DEBUG
+================================================================================
+
+RandomAudioSelecting
+  If true, a random audio track from Audio/AnimationCycleType2/ is picked
+  for each Type 2 cycle.
+  Set to false to manually select a track using AudioIndex below.
+
+AudioIndex
+  Only used when RandomAudioSelecting is false.
+  Index of the audio track to always play (0-based).
+  For example, 0 = the first file, 2 = the third file.
