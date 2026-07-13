@@ -68,7 +68,7 @@
         },
         {
           "type": "SaveAndHideMap",
-          "tileAmount": 60
+          "tileAmount": 40
         },
         {
           "type": "StartIncreasingAnger",

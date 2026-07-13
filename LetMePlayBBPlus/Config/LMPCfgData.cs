@@ -1,7 +1,9 @@
+using Newtonsoft.Json;
+
 [System.Serializable]
 public class LMPCfgData
 {
-    public float cooldown = 25f;
+    public float cooldown = 35f;
     public float phase1Duration = 15f;
     public float spawnInterval = 0.50f;
     public float mainStopTime = 2f;
@@ -13,11 +15,12 @@ public class LMPCfgData
     public float cooldownMultiplierLogBase = 6f;
     public float starterAnger = 1.5f;
 
-    public int maxRecentSilhouettes = 4;
+    public int maxRecentSilhouettes = 8;
     public float CycleType2AngerRequirement = 5.0f;
     public int CycleType2Chance = 3;
 
-    public List<string> pausingSilhouettes = new List<string>
+    [JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
+    public HashSet<string> pausingSilhouettes = new HashSet<string>
     {
         "silhouette0",
         "silhouette1"

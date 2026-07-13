@@ -1,5 +1,5 @@
 {
-  "cooldown": 1.0,
+  "cooldown": 35.0,
   "phase1Duration": 15.0,
   "spawnInterval": 0.5,
   "mainStopTime": 2.0,
@@ -10,13 +10,13 @@
   "multiplierLogBase": 6.0,
   "cooldownMultiplierLogBase": 6.0,
   "starterAnger": 1.5,
-  "maxRecentSilhouettes": 4,
-  "CycleType2AngerRequirement": 0.0,
-  "CycleType2Chance": 1,
+  "maxRecentSilhouettes": 8,
+  "CycleType2AngerRequirement": 5.0,
+  "CycleType2Chance": 3,
   "pausingSilhouettes": [
     "silhouette0",
     "silhouette1"
   ],
-  "RandomAudioSelecting": false,
-  "AudioIndex": 2
+  "RandomAudioSelecting": true,
+  "AudioIndex": 0
 }

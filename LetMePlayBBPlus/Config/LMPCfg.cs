@@ -15,10 +15,7 @@ public static class LMPCfg
     public static int MaxRecentSilhouettes { get; set; }
     public static float CycleType2AngerRequirement { get; set; }
     public static int CycleType2Chance { get; set; }
-    public static HashSet<string> PausingSilhouettes { get; set; } = new HashSet<string>
-    {
-        "silhouette0"
-    };
+    public static HashSet<string> PausingSilhouettes { get; set; } = new HashSet<string>{};
 
     public static bool RandomAudioSelecting { get; set; }
     public static int AudioIndex { get; set; }
@@ -46,7 +43,7 @@ public static class LMPCfg
         MaxRecentSilhouettes = _defaults.maxRecentSilhouettes;
         CycleType2AngerRequirement = _defaults.CycleType2AngerRequirement;
         CycleType2Chance = _defaults.CycleType2Chance;
-        PausingSilhouettes = new HashSet<string>(_defaults.pausingSilhouettes);
+        PausingSilhouettes = _defaults.pausingSilhouettes;
         RandomAudioSelecting = _defaults.RandomAudioSelecting;
         AudioIndex = _defaults.AudioIndex;
     }
