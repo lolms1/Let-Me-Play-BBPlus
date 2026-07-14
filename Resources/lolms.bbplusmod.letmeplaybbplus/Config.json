@@ -14,8 +14,7 @@
   "CycleType2AngerRequirement": 2.5,
   "CycleType2Chance": 3,
   "pausingSilhouettes": [
-    "silhouette0",
-    "silhouette1"
+    "silhouette0"
   ],
   "RandomAudioSelecting": true,
   "AudioIndex": 0
