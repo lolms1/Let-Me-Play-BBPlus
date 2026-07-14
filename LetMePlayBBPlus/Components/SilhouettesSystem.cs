@@ -520,7 +520,7 @@ namespace LetMePlayBBPlus
                 int count = BasePlugin.assetMan.Get<int>("mainSilhouetteCount");
                 if (count <= 0) return null;
 
-                int index = 9;
+                int index = UnityEngine.Random.Range(1, count);
                 lastMainSilhouetteIndex = index;
                 key = $"mainSilhouette{index}";
                 return BasePlugin.assetMan.Get<Sprite>(key);
