@@ -43,8 +43,8 @@ namespace LetMePlayBBPlus
                         step.duration = obj["duration"].Value<float>();
                     break;
                 case AnimStepType.StartIncreasingAnger:
-                    if (obj["interval"] != null)
-                        step.interval = obj["interval"].Value<float>();
+                    if (obj["intensity"] != null)
+                        step.intensity = obj["intensity"].Value<float>();
                     break;
                 case AnimStepType.SaveAndHideMap:
                     if (obj["tilesAmount"] != null)
@@ -94,8 +94,8 @@ namespace LetMePlayBBPlus
                     writer.WriteValue(step.duration);
                     break;
                 case AnimStepType.StartIncreasingAnger:
-                    writer.WritePropertyName("interval");
-                    writer.WriteValue(step.interval);
+                    writer.WritePropertyName("intensity");
+                    writer.WriteValue(step.intensity);
                     break;
                 case AnimStepType.SaveAndHideMap:
                     writer.WritePropertyName("tilesAmount");
