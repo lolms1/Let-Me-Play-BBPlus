@@ -299,6 +299,7 @@ namespace LetMePlayBBPlus
             currentSpawnInterval = p.spawnInterval ?? baseSpawnInterval;
             currentSilhouetteSpeed = p.silhouetteSpeed ?? baseSilhouetteSpeed;
             currentPauseAtEdgeTime = p.pauseAtEdgeTime ?? basePauseAtEdgeTime;
+            currentMainStopTime = p.mainStopTime ?? baseMainStopTime;
         }
         private void CalculateCurrentCooldown()
         {
@@ -519,7 +520,7 @@ namespace LetMePlayBBPlus
                 int count = BasePlugin.assetMan.Get<int>("mainSilhouetteCount");
                 if (count <= 0) return null;
 
-                int index = UnityEngine.Random.Range(1, count);
+                int index = 9;
                 lastMainSilhouetteIndex = index;
                 key = $"mainSilhouette{index}";
                 return BasePlugin.assetMan.Get<Sprite>(key);

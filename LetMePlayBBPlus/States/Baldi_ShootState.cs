@@ -276,7 +276,7 @@ namespace LetMePlayBBPlus
             cleanupTimer = 0f;
             // coefficient = BaldiShootCfg.Coefficient;
             bulletAmount = 3;
-            piercingBullet = true;
+            piercingBullet = false;
             bulletSpeed = 300;
 
             float multiplier = 1;

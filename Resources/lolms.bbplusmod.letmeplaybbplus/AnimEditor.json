@@ -2,11 +2,11 @@
   "sequences": {
     "animAudioType2_0": {
       "parameters": {
-        "phase1Duration": null,
-        "spawnInterval": null,
-        "silhouetteSpeed": null,
-        "mainStopTime": null,
-        "pauseAtEdgeTime": null
+        "phase1Duration": 3.3,
+        "spawnInterval": 0.33,
+        "silhouetteSpeed": 1200,
+        "mainStopTime": 2.0,
+        "pauseAtEdgeTime": 0.6
       },
       "steps": [
         {

@@ -11,7 +11,7 @@
   "cooldownMultiplierLogBase": 6.0,
   "starterAnger": 1.5,
   "maxRecentSilhouettes": 8,
-  "CycleType2AngerRequirement": 5.0,
+  "CycleType2AngerRequirement": 2.5,
   "CycleType2Chance": 3,
   "pausingSilhouettes": [
     "silhouette0",

@@ -147,7 +147,7 @@ namespace LetMePlayBBPlus
 
             SoundObject shootSound = ObjectCreators.CreateSoundObject(
                 shootClip,
-                "Sfx_Baldi_Shoot_Shoot",
+                "**BANG**", // too lazy to load localization, sry
                 SoundType.Effect,
                 Color.red
             );
@@ -155,7 +155,7 @@ namespace LetMePlayBBPlus
 
             SoundObject BaldiAimingSound = ObjectCreators.CreateSoundObject(
                 BaldiAimingClip,
-                "Sfx_Baldi_Shoot_Aim",
+                "**AIMING**",
                 SoundType.Effect,
                 Color.red
             );
